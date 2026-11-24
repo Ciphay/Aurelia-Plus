@@ -1,0 +1,13 @@
+{
+ "STEAMCONTROLLER_INTERFACE_VERSION": {
+  "complete": true,
+  "slots": [
+   {"name": "Init", "ret": "bool", "argbytes32": 4},
+   {"name": "Shutdown", "ret": "bool", "argbytes32": 0},
+   {"name": "RunFrame", "ret": "void", "argbytes32": 0},
+   {"name": "GetControllerState", "ret": "bool", "argbytes32": 8},
+   {"name": "TriggerHapticPulse", "ret": "void", "argbytes32": 12},
+   {"name": "SetOverrideMode", "ret": "void", "argbytes32": 4}
+  ]
+ }
+}

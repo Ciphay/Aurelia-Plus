@@ -1,0 +1,198 @@
+[package]
+edition = "2024"
+rust-version = "1.88.0"
+name = "aurelia-steam-vent"
+version = "0.7.2"
+authors = ["Robin Appelman <robin@icewind.nl>"]
+build = false
+autolib = false
+autobins = false
+autoexamples = false
+autotests = false
+autobenches = false
+description = "Interact with the Steam network via rust (Aurelia fork of steam-vent with per-session logon IDs)"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+repository = "https://codeberg.org/Drackrath/aurelia-steam-vent"
+
+[lib]
+name = "steam_vent"
+path = "src/lib.rs"
+
+[[example]]
+name = "auth_ticket"
+path = "examples/auth_ticket.rs"
+
+[[example]]
+name = "backpack"
+path = "examples/backpack.rs"
+required-features = ["steam-vent-proto/tf2"]
+
+[[example]]
+name = "chat"
+path = "examples/chat.rs"
+
+[[example]]
+name = "custom_transport"
+path = "examples/custom_transport.rs"
+
+[[example]]
+name = "inventory"
+path = "examples/inventory.rs"
+required-features = ["steam-vent-proto/csgo"]
+
+[[example]]
+name = "login"
+path = "examples/login.rs"
+
+[[example]]
+name = "product_info"
+path = "examples/product_info.rs"
+
+[[example]]
+name = "refresh_token"
+path = "examples/refresh_token.rs"
+
+[[example]]
+name = "test"
+path = "examples/test.rs"
+
+[dependencies.another-steam-totp]
+version = "0.4.2"
+
+[dependencies.async-stream]
+version = "0.3.6"
+
+[dependencies.base64]
+version = "0.22.1"
+
+[dependencies.binrw]
+version = "0.15.0"
+
+[dependencies.bytemuck]
+version = "1.23.2"
+features = ["derive"]
+
+[dependencies.byteorder]
+version = "1.5.0"
+
+[dependencies.bytes]
+version = "1.10.1"
+
+[dependencies.crc]
+version = "3.3.0"
+
+[dependencies.dashmap]
+version = "6.1.0"
+
+[dependencies.directories]
+version = "6.0.0"
+
+[dependencies.flate2]
+version = "1.1.2"
+
+[dependencies.futures-util]
+version = "0.3.31"
+features = ["sink"]
+
+[dependencies.num-bigint-dig]
+version = "0.8.6"
+
+[dependencies.num-traits]
+version = "0.2.19"
+
+[dependencies.num_enum]
+version = "0.7.4"
+
+[dependencies.rand]
+version = "0.10.0"
+
+[dependencies.reqwest]
+version = "0.13.2"
+features = ["json"]
+
+[dependencies.rsa]
+version = "0.9.10"
+
+[dependencies.rustls]
+version = "0.23.31"
+
+[dependencies.serde]
+version = "1.0.219"
+features = ["derive"]
+
+[dependencies.serde_json]
+version = "1.0.143"
+
+[dependencies.serde_with]
+version = "3.21.0"
+features = ["base64"]
+
+[dependencies.steam-machine-id]
+version = "0.2.0"
+
+[dependencies.steam-vent-core]
+version = "0.1"
+package = "aurelia-steam-vent-core"
+
+[dependencies.steam-vent-crypto]
+version = "0.2"
+
+[dependencies.steam-vent-proto-common]
+version = "0.5.1"
+
+[dependencies.steam-vent-proto-steam]
+version = "0.5.2"
+
+[dependencies.steamid-ng]
+version = "3.0.0"
+
+[dependencies.thiserror]
+version = "2.0.16"
+
+[dependencies.tokio]
+version = "1.47.1"
+features = [
+    "net",
+    "io-util",
+    "macros",
+    "io-std",
+]
+
+[dependencies.tokio-stream]
+version = "0.1.17"
+features = ["sync"]
+
+[dependencies.tokio-tungstenite]
+version = "0.29.0"
+features = ["rustls-tls-webpki-roots"]
+
+[dependencies.tokio-util]
+version = "0.7.16"
+features = ["codec"]
+
+[dependencies.tracing]
+version = "0.1.41"
+
+[dependencies.webpki-roots]
+version = "1.0.2"
+
+[dependencies.zeroize]
+version = "1.8"
+
+[dev-dependencies.steam-vent-proto]
+version = "0.5.2"
+
+[dev-dependencies.tokio]
+version = "1.47"
+features = [
+    "macros",
+    "rt",
+    "rt-multi-thread",
+]
+
+[dev-dependencies.tracing-subscriber]
+version = "0.3.20"
+
+[dev-dependencies.vdf-reader]
+version = "0.3.1"

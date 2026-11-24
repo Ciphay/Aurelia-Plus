@@ -1,0 +1,7 @@
+{
+  "name": "aurelia-plus-overlay",
+  "version": "0.1.0",
+  "description": "Basic Aurelia Plus overlay: shows the requested Steam page (purchase, store) on top of the game and returns the decision to Aurelia.",
+  "main": "main.js",
+  "private": true
+}

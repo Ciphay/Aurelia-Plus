@@ -1,0 +1,916 @@
+{
+ "STEAMAPPS_INTERFACE": {
+  "true": [
+   "SetDlcContext"
+  ],
+  "void": [
+   "InstallDLC",
+   "RequestAllProofOfPurchaseKeys",
+   "RequestAppProofOfPurchaseKey",
+   "SetGamePerformanceSetting",
+   "SetGameRenderResolution",
+   "UninstallDLC"
+  ],
+  "zero": [
+   "GetAppData",
+   "GetBetaInfo",
+   "GetDlcDownloadProgress",
+   "GetEarliestPurchaseUnixTime",
+   "GetNumBetas",
+   "SetActiveBeta"
+  ]
+ },
+ "STEAMHTMLSURFACE_INTERFACE": {
+  "zero": [
+   "AddHeader",
+   "AllowStartRequest",
+   "CopyToClipboard",
+   "ExecuteJavascript",
+   "FileLoadDialogResponse",
+   "Find",
+   "GetLinkAtPosition",
+   "GoBack",
+   "GoForward",
+   "JSDialogResponse",
+   "KeyChar",
+   "KeyDown",
+   "KeyUp",
+   "LoadURL",
+   "MouseDoubleClick",
+   "MouseDown",
+   "MouseMove",
+   "MouseUp",
+   "MouseWheel",
+   "OpenDeveloperTools",
+   "PasteFromClipboard",
+   "Reload",
+   "RemoveBrowser",
+   "SetBackgroundMode",
+   "SetCookie",
+   "SetDPIScalingFactor",
+   "SetHorizontalScroll",
+   "SetKeyFocus",
+   "SetPageScaleFactor",
+   "SetSize",
+   "SetVerticalScroll",
+   "StopFind",
+   "StopLoad",
+   "ViewSource",
+   "destructor"
+  ]
+ },
+ "STEAMINVENTORY_INTERFACE": {
+  "zero": [
+   "AddPromoItem",
+   "AddPromoItems",
+   "CheckResultSteamID",
+   "ConsumeItem",
+   "DestroyResult",
+   "ExchangeItems",
+   "GetAllItems",
+   "GetEligiblePromoItemDefinitionIDs",
+   "GetItemDefinitionIDs",
+   "GetItemDefinitionProperty",
+   "GetItemPrice",
+   "GetItemsByID",
+   "GetItemsWithPrices",
+   "GetNumItemsWithPrices",
+   "GetResultItemProperty",
+   "GetResultItems",
+   "GetResultStatus",
+   "GetResultTimestamp",
+   "GrantPromoItems",
+   "InspectItem",
+   "LoadItemDefinitions",
+   "RemoveProperty",
+   "SendItemDropHeartbeat",
+   "SerializeResult",
+   "SetProperty",
+   "SetProperty_2",
+   "SetProperty_3",
+   "SetProperty_4",
+   "SubmitUpdateProperties",
+   "TradeItems",
+   "TransferItemQuantity",
+   "TriggerItemDrop"
+  ]
+ },
+ "STEAMMUSICREMOTE_INTERFACE": {
+  "zero": [
+   "BActivationSuccess",
+   "BIsCurrentMusicRemote",
+   "CurrentEntryDidChange",
+   "CurrentEntryIsAvailable",
+   "CurrentEntryWillChange",
+   "DeregisterSteamMusicRemote",
+   "EnableLooped",
+   "EnablePlayNext",
+   "EnablePlayPrevious",
+   "EnablePlaylists",
+   "EnableQueue",
+   "EnableShuffled",
+   "PlaylistDidChange",
+   "PlaylistWillChange",
+   "QueueDidChange",
+   "QueueWillChange",
+   "RegisterSteamMusicRemote",
+   "ResetPlaylistEntries",
+   "ResetQueueEntries",
+   "SetCurrentPlaylistEntry",
+   "SetCurrentQueueEntry",
+   "SetDisplayName",
+   "SetPNGIcon_64x64",
+   "SetPlaylistEntry",
+   "SetQueueEntry",
+   "UpdateCurrentEntryCoverArt",
+   "UpdateCurrentEntryElapsedSeconds",
+   "UpdateCurrentEntryText",
+   "UpdateLooped",
+   "UpdatePlaybackStatus",
+   "UpdateShuffled",
+   "UpdateVolume"
+  ]
+ },
+ "STEAMMUSIC_INTERFACE": {
+  "zero": [
+   "BIsPlaying",
+   "GetVolume",
+   "Pause",
+   "Play",
+   "PlayNext",
+   "PlayPrevious",
+   "SetVolume"
+  ],
+  "ret:1": [
+   "BIsEnabled"
+  ],
+  "ret:3": [
+   "GetPlaybackStatus"
+  ]
+ },
+ "STEAMPARENTALSETTINGS_INTERFACE": {
+  "zero": [
+   "BIsAppBlocked",
+   "BIsAppInBlockList",
+   "BIsFeatureBlocked",
+   "BIsFeatureInBlockList",
+   "BIsParentalLockEnabled",
+   "BIsParentalLockLocked"
+  ]
+ },
+ "STEAMREMOTEPLAY_INTERFACE": {
+  "struct8": [
+   "GetSessionSteamID"
+  ],
+  "zero": [
+   "BEnableRemotePlayTogetherDirectInput",
+   "BGetSessionClientResolution",
+   "BSendRemotePlayTogetherInvite",
+   "BSessionRemotePlayTogether",
+   "BStartRemotePlayTogether",
+   "CreateMouseCursor",
+   "DisableRemotePlayTogetherDirectInput",
+   "GetInput",
+   "GetLargeSessionAvatar",
+   "GetMediumSessionAvatar",
+   "GetSessionClientFormFactor",
+   "GetSessionClientName",
+   "GetSessionCount",
+   "GetSessionGuestID",
+   "GetSessionID",
+   "GetSmallSessionAvatar",
+   "SetMouseCursor",
+   "SetMousePosition",
+   "SetMouseVisibility",
+   "ShowRemotePlayTogetherUI"
+  ]
+ },
+ "STEAMREMOTESTORAGE_INTERFACE": {
+  "true": [
+   "BeginFileWriteBatch",
+   "EndFileWriteBatch"
+  ],
+  "zero": [
+   "CreatePublishedFileUpdateRequest",
+   "GetCachedUGCCount",
+   "GetUGCDetails",
+   "GetUGCDownloadProgress",
+   "UGCRead",
+   "UpdatePublishedFileDescription",
+   "UpdatePublishedFileFile",
+   "UpdatePublishedFilePreviewFile",
+   "UpdatePublishedFileSetChangeDescription",
+   "UpdatePublishedFileTags",
+   "UpdatePublishedFileTitle",
+   "UpdatePublishedFileVisibility"
+  ],
+  "ret:-1": [
+   "GetCachedUGCHandle"
+  ]
+ },
+ "STEAMSCREENSHOTS_INTERFACE": {
+  "ret:2": [
+   "AddVRScreenshotToLibrary"
+  ]
+ },
+ "STEAMTIMELINE_INTERFACE": {
+  "zero": [
+   "AddGamePhaseTag",
+   "AddTimelineEvent",
+   "ClearTimelineStateDescription",
+   "ClearTimelineTooltip",
+   "EndGamePhase",
+   "EndRangeTimelineEvent",
+   "OpenOverlayToGamePhase",
+   "OpenOverlayToTimelineEvent",
+   "RemoveTimelineEvent",
+   "SetGamePhaseAttribute",
+   "SetGamePhaseID",
+   "SetTimelineGameMode",
+   "SetTimelineStateDescription",
+   "SetTimelineTooltip",
+   "StartGamePhase",
+   "StartRangeTimelineEvent",
+   "UpdateRangeTimelineEvent"
+  ]
+ },
+ "STEAMUGC_INTERFACE": {
+  "zero": [
+   "AddContentDescriptor",
+   "AddExcludedTag",
+   "AddItemKeyValueTag",
+   "AddItemPreviewFile",
+   "AddItemPreviewVideo",
+   "AddRequiredKeyValueTag",
+   "AddRequiredTag",
+   "AddRequiredTagGroup",
+   "BInitWorkshopForGameServer",
+   "CreateQueryAllUGCRequest",
+   "CreateQueryAllUGCRequest_2",
+   "CreateQueryUGCDetailsRequest",
+   "CreateQueryUserUGCRequest",
+   "DownloadItem",
+   "GetDownloadedItems",
+   "GetItemDownloadInfo",
+   "GetItemInstallInfo",
+   "GetItemState",
+   "GetItemUpdateInfo",
+   "GetItemUpdateProgress",
+   "GetNumDownloadedItems",
+   "GetNumSubscribedItems",
+   "GetNumSupportedGameVersions",
+   "GetQueryUGCAdditionalPreview",
+   "GetQueryUGCChildren",
+   "GetQueryUGCContentDescriptors",
+   "GetQueryUGCKeyValueTag",
+   "GetQueryUGCKeyValueTag_2",
+   "GetQueryUGCMetadata",
+   "GetQueryUGCNumAdditionalPreviews",
+   "GetQueryUGCNumKeyValueTags",
+   "GetQueryUGCNumTags",
+   "GetQueryUGCPreviewURL",
+   "GetQueryUGCResult",
+   "GetQueryUGCStatistic",
+   "GetQueryUGCTag",
+   "GetQueryUGCTagDisplayName",
+   "GetSubscribedItems",
+   "GetSupportedGameVersionData",
+   "GetUserContentDescriptorPreferences",
+   "MarkDownloadedItemAsUnused",
+   "ReleaseQueryUGCRequest",
+   "RemoveAllItemKeyValueTags",
+   "RemoveContentDescriptor",
+   "RemoveItemKeyValueTags",
+   "RemoveItemPreview",
+   "SetAdminQuery",
+   "SetAllowCachedResponse",
+   "SetAllowLegacyUpload",
+   "SetCloudFileNameFilter",
+   "SetItemContent",
+   "SetItemDescription",
+   "SetItemMetadata",
+   "SetItemPreview",
+   "SetItemTags",
+   "SetItemTitle",
+   "SetItemUpdateLanguage",
+   "SetItemVisibility",
+   "SetItemsDisabledLocally",
+   "SetLanguage",
+   "SetMatchAnyTag",
+   "SetRankedByTrendDays",
+   "SetRequiredGameVersions",
+   "SetReturnAdditionalPreviews",
+   "SetReturnChildren",
+   "SetReturnKeyValueTags",
+   "SetReturnLongDescription",
+   "SetReturnMetadata",
+   "SetReturnOnlyIDs",
+   "SetReturnPlaytimeStats",
+   "SetReturnTotalOnly",
+   "SetSearchText",
+   "SetSubscriptionsLoadOrder",
+   "SetTimeCreatedDateRange",
+   "SetTimeUpdatedDateRange",
+   "ShowWorkshopEULA",
+   "StartItemUpdate",
+   "SuspendDownloads",
+   "UpdateItemPreviewFile",
+   "UpdateItemPreviewVideo"
+  ]
+ },
+ "STEAMUNIFIEDMESSAGES_INTERFACE": {
+  "zero": [
+   "GetMethodResponseData",
+   "GetMethodResponseInfo",
+   "ReleaseMethod",
+   "SendNotification"
+  ]
+ },
+ "STEAMUSERSTATS_INTERFACE": {
+  "empty": [
+   "GetAchievementDisplayAttribute",
+   "GetGroupAchievementName",
+   "GetLeaderboardName"
+  ],
+  "zero": [
+   "ClearGroupAchievement",
+   "GetAchievementIcon",
+   "GetAchievementProgressLimits",
+   "GetAchievementProgressLimits_2",
+   "GetDownloadedLeaderboardEntry",
+   "GetGlobalStat",
+   "GetGlobalStatHistory",
+   "GetGlobalStatHistory_2",
+   "GetGlobalStat_2",
+   "GetGroupAchievement",
+   "GetLeaderboardDisplayType",
+   "GetLeaderboardEntryCount",
+   "GetLeaderboardSortMethod",
+   "GetMostAchievedAchievementInfo",
+   "GetNextMostAchievedAchievementInfo",
+   "GetNumGroupAchievements",
+   "SetGroupAchievement"
+  ]
+ },
+ "STEAMVIDEO_INTERFACE": {
+  "zero": [
+   "GetOPFSettings",
+   "GetOPFStringForApp",
+   "GetVideoURL",
+   "IsBroadcasting"
+  ]
+ },
+ "SteamBilling": {
+  "zero": [
+   "CancelLicense",
+   "CancelPurchase",
+   "CompletePurchase",
+   "DeleteCard",
+   "GetActivationCodeInfo",
+   "GetBillingAddress",
+   "GetCardInfo",
+   "GetCardList",
+   "GetFinalPrice",
+   "GetLicenseFlags",
+   "GetLicenseMinuteLimit",
+   "GetLicenseMinutesUsed",
+   "GetLicensePackageID",
+   "GetLicensePaymentMethod",
+   "GetLicensePurchaseCountryCode",
+   "GetLicenseTimeCreated",
+   "GetLicenseTimeNextProcess",
+   "GetNumLicenses",
+   "GetNumReceipts",
+   "GetPreviousClickAndBuyAccount",
+   "GetPurchaseReceipts",
+   "GetReceiptBaseCost",
+   "GetReceiptCountryCode",
+   "GetReceiptPackageID",
+   "GetReceiptPaymentMethod",
+   "GetReceiptResultDetail",
+   "GetReceiptShipping",
+   "GetReceiptStatus",
+   "GetReceiptTax",
+   "GetReceiptTotalDiscount",
+   "GetReceiptTransTime",
+   "GetShippingAddress",
+   "InitClickAndBuyPurchase",
+   "InitCreditCardPurchase",
+   "InitPayPalPurchase",
+   "Obsolete_GetLicenses",
+   "PurchaseWithActivationCode",
+   "PurchaseWithMachineID",
+   "SetBillingAddress",
+   "SetCardInfo",
+   "SetShippingAddress",
+   "UpdateCardInfo"
+  ]
+ },
+ "SteamController": {
+  "empty": [
+   "GetGlyphForActionOrigin",
+   "GetGlyphForXboxOrigin",
+   "GetStringForActionOrigin",
+   "GetStringForXboxOrigin"
+  ],
+  "hidden16": [
+   "GetAnalogActionData"
+  ],
+  "hidden2": [
+   "GetDigitalActionData"
+  ],
+  "hidden40": [
+   "GetMotionData"
+  ],
+  "zero": [
+   "ActivateActionSet",
+   "ActivateActionSetLayer",
+   "DeactivateActionSetLayer",
+   "DeactivateAllActionSetLayers",
+   "GetActionOriginFromXboxOrigin",
+   "GetActiveActionSetLayers",
+   "GetAnalogActionOrigins",
+   "GetConnectedControllers",
+   "GetControllerBindingRevision",
+   "GetControllerForGamepadIndex",
+   "GetCurrentActionSet",
+   "GetDigitalActionOrigins",
+   "GetInputTypeForHandle",
+   "SetLEDColor",
+   "ShowAnalogActionOrigins",
+   "ShowBindingPanel",
+   "ShowDigitalActionOrigins",
+   "StopAnalogActionMomentum",
+   "TranslateActionOrigin",
+   "TriggerHapticPulse",
+   "TriggerRepeatedHapticPulse",
+   "TriggerVibration"
+  ],
+  "ret:-1": [
+   "GetGamepadIndexForController"
+  ]
+ },
+ "SteamFriends": {
+  "empty": [
+   "GetClanTag",
+   "GetFriendPersonaNameHistory",
+   "GetFriendRegValue"
+  ],
+  "struct8": [
+   "GetChatMemberByIndex",
+   "GetClanOfficerByIndex",
+   "GetClanOwner",
+   "GetFriendFromSourceByIndex"
+  ],
+  "zero": [
+   "AcknowledgeInviteToClan",
+   "AddFriend",
+   "AddFriendByName",
+   "BHasEquippedProfileItem",
+   "ClearChatHistory",
+   "CloseClanChatWindowInSteam",
+   "GetBlockedFriendCount",
+   "GetChatIDOfChatHistoryStart",
+   "GetChatMessage",
+   "GetClanActivityCounts",
+   "GetClanChatMemberCount",
+   "GetClanChatMessage",
+   "GetClanOfficerCount",
+   "GetFriendAvatar",
+   "GetFriendCountFromSource",
+   "GetFriendMessage",
+   "GetFriendSteamLevel",
+   "GetFriendsGroupCount",
+   "GetFriendsGroupIDByIndex",
+   "GetFriendsGroupMembersCount",
+   "GetFriendsGroupMembersList",
+   "GetFriendsGroupName",
+   "GetLargeFriendAvatar",
+   "GetMediumFriendAvatar",
+   "GetNumChatsWithUnreadPriorityMessages",
+   "GetPlayerNickname",
+   "GetProfileItemPropertyString",
+   "GetProfileItemPropertyUint",
+   "GetSmallFriendAvatar",
+   "GetUserRestrictions",
+   "InviteFriendByEmail",
+   "InviteFriendToClan",
+   "InviteUserToGame",
+   "IsClanChatAdmin",
+   "IsClanChatWindowOpenInSteam",
+   "IsClanOfficialGameGroup",
+   "IsClanPublic",
+   "IsUserInSource",
+   "LeaveClanChatRoom",
+   "RegisterProtocolInOverlayBrowser",
+   "RemoveFriend",
+   "ReplyToFriendMessage",
+   "RequestFriendRichPresence",
+   "SendClanChatMessage",
+   "SendMsgToFriend",
+   "SendMsgToFriend_2",
+   "SetChatHistoryStart",
+   "SetFriendRegValue",
+   "SetInGameVoiceSpeaking",
+   "SetPersonaName",
+   "SetPersonaState"
+  ],
+  "ret:1": [
+   "OpenClanChatWindowInSteam",
+   "SetListenForFriendsMessages"
+  ]
+ },
+ "SteamGameCoordinator": {
+  "ret:1": [
+   "RetrieveMessage"
+  ],
+  "ret:3": [
+   "SendMessage"
+  ],
+  "zero": [
+   "IsMessageAvailable"
+  ]
+ },
+ "SteamGameServer0": {
+  "struct8": [
+   "CreateUnauthenticatedUserConnection",
+   "GetSteamID"
+  ],
+  "zero": [
+   "BGetUserAchievementStatus",
+   "CancelAuthTicket",
+   "ClearAllKeyValues",
+   "EnableHeartbeats",
+   "EndAuthSession",
+   "ForceHeartbeat",
+   "ForceMasterServerHeartbeat_DEPRECATED",
+   "GSCreateUnauthenticatedUser",
+   "GSGetSteam2GetEncryptionKeyToSendToNewClient",
+   "GSGetUserAchievementStatus",
+   "GSRemoveUserConnect",
+   "GSSendSteam2UserConnect",
+   "GSSendSteam3UserConnect",
+   "GSSendUserConnect",
+   "GSSendUserDisconnect",
+   "GSSendUserStatusResponse",
+   "GSSetGameType",
+   "GSSetSpawnCount",
+   "GSSetUserData",
+   "GSUpdateSpectatorPort",
+   "GetAuthSessionTicket",
+   "GetGameplayStats",
+   "GetNextOutgoingPacket",
+   "GetPublicIP",
+   "HandleIncomingPacket",
+   "Obsolete_GSSetStatus",
+   "RequestUserGroupStatus",
+   "SendUserDisconnect_DEPRECATED",
+   "SetAdvertiseServerActive",
+   "SetBotPlayerCount",
+   "SetDedicatedServer",
+   "SetGameData",
+   "SetGameDescription",
+   "SetGameTags",
+   "SetGameType",
+   "SetHeartbeatInterval",
+   "SetKeyValue",
+   "SetMapName",
+   "SetMasterServerHeartbeatInterval_DEPRECATED",
+   "SetMaxPlayerCount",
+   "SetModDir",
+   "SetPasswordProtected",
+   "SetProduct",
+   "SetRegion",
+   "SetServerName",
+   "SetSpectatorPort",
+   "SetSpectatorServerName",
+   "UpdateServerStatus",
+   "UpdateSpectatorPort"
+  ]
+ },
+ "SteamGameServerStats": {
+  "zero": [
+   "ClearUserAchievement",
+   "GetUserAchievement",
+   "GetUserStat",
+   "GetUserStat_2",
+   "SetUserAchievement",
+   "SetUserStat",
+   "SetUserStat_2",
+   "UpdateUserAvgRateStat"
+  ]
+ },
+ "SteamInput": {
+  "empty": [
+   "GetGlyphForActionOrigin",
+   "GetGlyphForActionOrigin_Legacy",
+   "GetGlyphForXboxOrigin",
+   "GetGlyphPNGForActionOrigin",
+   "GetGlyphSVGForActionOrigin",
+   "GetStringForActionOrigin",
+   "GetStringForAnalogActionName",
+   "GetStringForDigitalActionName",
+   "GetStringForXboxOrigin"
+  ],
+  "hidden16": [
+   "GetAnalogActionData"
+  ],
+  "hidden2": [
+   "GetDigitalActionData"
+  ],
+  "hidden40": [
+   "GetMotionData"
+  ],
+  "zero": [
+   "ActivateActionSet",
+   "ActivateActionSetLayer",
+   "DeactivateActionSetLayer",
+   "DeactivateAllActionSetLayers",
+   "EnableActionEventCallbacks",
+   "EnableDeviceCallbacks",
+   "GetActionOriginFromXboxOrigin",
+   "GetActiveActionSetLayers",
+   "GetAnalogActionOrigins",
+   "GetConnectedControllers",
+   "GetControllerForGamepadIndex",
+   "GetCurrentActionSet",
+   "GetDeviceBindingRevision",
+   "GetDigitalActionOrigins",
+   "GetInputTypeForHandle",
+   "GetRemotePlaySessionID",
+   "GetSessionInputConfigurationSettings",
+   "Legacy_TriggerHapticPulse",
+   "Legacy_TriggerRepeatedHapticPulse",
+   "SetDualSenseTriggerEffect",
+   "SetInputActionManifestFilePath",
+   "SetLEDColor",
+   "ShowBindingPanel",
+   "StopAnalogActionMomentum",
+   "TranslateActionOrigin",
+   "TriggerHapticPulse",
+   "TriggerRepeatedHapticPulse",
+   "TriggerSimpleHapticEvent",
+   "TriggerVibration",
+   "TriggerVibrationExtended"
+  ],
+  "ret:-1": [
+   "GetGamepadIndexForController"
+  ]
+ },
+ "SteamMasterServerUpdater": {
+  "void": [
+   "ClearAllKeyValues",
+   "ForceHeartbeat",
+   "NotifyShutdown",
+   "SetActive",
+   "SetBasicServerData",
+   "SetHeartbeatInterval",
+   "SetKeyValue"
+  ],
+  "zero": [
+   "AddMasterServer",
+   "GetMasterServerAddress",
+   "GetNextOutgoingPacket",
+   "GetNumMasterServers",
+   "HandleIncomingPacket",
+   "RemoveMasterServer",
+   "WasRestartRequested"
+  ]
+ },
+ "SteamMatchGameSearch": {
+  "ret:7": [
+   "AcceptGame",
+   "DeclineGame",
+   "SubmitPlayerResult"
+  ],
+  "ret:9": [
+   "AddGameSearchParams",
+   "CancelRequestPlayersForGame",
+   "EndGame",
+   "EndGameSearch",
+   "HostConfirmGameStart",
+   "RequestPlayersForGame",
+   "RetrieveConnectionDetails",
+   "SearchForGameSolo",
+   "SearchForGameWithLobby",
+   "SetConnectionDetails",
+   "SetGameHostParams"
+  ]
+ },
+ "SteamMatchMaking": {
+  "zero": [
+   "AddFavoriteGame2",
+   "AddRequestLobbyListFilter",
+   "AddRequestLobbyListSlotsAvailableFilter",
+   "GetLobbyDistance",
+   "RemoveFavoriteGame2",
+   "SetLinkedLobby",
+   "SetLobbyVoiceEnabled"
+  ]
+ },
+ "SteamNetworkingFakeUDPPort": {
+  "zero": [
+   "DestroyFakeUDPPort",
+   "ReceiveMessages",
+   "ScheduleCleanup",
+   "SendMessageToFakeIP"
+  ]
+ },
+ "SteamNetworkingMessages0": {
+  "ret:3": [
+   "SendMessageToUser"
+  ],
+  "zero": [
+   "AcceptSessionWithUser",
+   "CloseChannelWithUser",
+   "CloseSessionWithUser",
+   "GetSessionConnectionInfo",
+   "ReceiveMessagesOnChannel"
+  ]
+ },
+ "SteamNetworkingSockets0": {
+  "ret:-102": [
+   "GetAuthenticationStatus",
+   "InitAuthentication"
+  ],
+  "ret:3": [
+   "AcceptConnection",
+   "FlushMessagesOnConnection",
+   "GetConnectionRealTimeStatus",
+   "SendMessageToConnection"
+  ],
+  "zero": [
+   "BeginAsyncRequestFakeIP",
+   "CacheRelayTicket",
+   "CloseConnection",
+   "CloseListenSocket",
+   "ConfigureConnectionLanes",
+   "ConnectByIPAddress",
+   "ConnectP2P",
+   "ConnectP2PCustomSignaling",
+   "ConnectToHostedDedicatedServer",
+   "CreateFakeUDPPort",
+   "CreateHostedDedicatedServerListenSocket",
+   "CreateListenSocketIP",
+   "CreateListenSocketP2P",
+   "CreateListenSocketP2PFakeIP",
+   "CreatePollGroup",
+   "CreateSocketPair",
+   "DestroyPollGroup",
+   "FindRelayAuthTicketForServer",
+   "GetCachedRelayTicket",
+   "GetCachedRelayTicketCount",
+   "GetCertificateRequest",
+   "GetConnectionInfo",
+   "GetConnectionName",
+   "GetConnectionUserData",
+   "GetDetailedConnectionStatus",
+   "GetFakeIP",
+   "GetGameCoordinatorServerLogin",
+   "GetHostedDedicatedServerAddress",
+   "GetHostedDedicatedServerPOPID",
+   "GetHostedDedicatedServerPort",
+   "GetIdentity",
+   "GetListenSocketAddress",
+   "GetNetworkConfigJSON",
+   "GetQuickConnectionStatus",
+   "GetRemoteFakeIPForConnection",
+   "PostConnectionStateMsg",
+   "ReceiveMessagesOnConnection",
+   "ReceiveMessagesOnListenSocket",
+   "ReceiveMessagesOnPollGroup",
+   "ReceivedP2PCustomSignal",
+   "ReceivedRelayAuthTicket",
+   "ResetIdentity",
+   "RunCallbacks",
+   "SendMessages",
+   "SendP2PConnectionFailure",
+   "SendP2PRendezvous",
+   "SetCertificate",
+   "SetConnectionName",
+   "SetConnectionPollGroup",
+   "SetConnectionUserData",
+   "destructor"
+  ]
+ },
+ "SteamNetworkingSocketsSerialized": {
+  "zero": [
+   "CacheRelayTicket",
+   "GetCachedRelayTicket",
+   "GetCachedRelayTicketCount",
+   "GetNetworkConfigJSON",
+   "PostConnectionStateMsg",
+   "SendP2PConnectionFailure",
+   "SendP2PRendezvous"
+  ]
+ },
+ "SteamNetworkingUtils0": {
+  "ret:-1": [
+   "EstimatePingTimeBetweenTwoLocations",
+   "EstimatePingTimeFromLocalHost",
+   "GetDirectPingToPOP",
+   "GetPingToDataCenter"
+  ],
+  "zero": [
+   "AllocateMessage",
+   "CheckPingDataUpToDate",
+   "ConvertPingLocationToString",
+   "GetConfigValue",
+   "GetConfigValueInfo",
+   "GetLocalPingLocation",
+   "GetPOPCount",
+   "GetPOPList",
+   "GetRealIdentityForFakeIP",
+   "IsPingMeasurementInProgress",
+   "IterateGenericEditableConfigValues",
+   "ParsePingLocationString",
+   "SetConfigValue",
+   "SetDebugOutputFunction",
+   "SteamNetworkingIPAddr_GetFakeIPType",
+   "SteamNetworkingIPAddr_ParseString",
+   "SteamNetworkingIPAddr_ToString",
+   "SteamNetworkingIdentity_ParseString",
+   "SteamNetworkingIdentity_ToString",
+   "destructor"
+  ],
+  "ret:1": [
+   "GetIPv4FakeIPType"
+  ],
+  "ret:2": [
+   "GetFirstConfigValue"
+  ]
+ },
+ "SteamParties": {
+  "zero": [
+   "CancelReservation",
+   "DestroyBeacon",
+   "GetAvailableBeaconLocations",
+   "GetBeaconByIndex",
+   "GetBeaconDetails",
+   "GetBeaconLocationData",
+   "GetNumActiveBeacons",
+   "GetNumAvailableBeaconLocations",
+   "OnReservationCompleted"
+  ]
+ },
+ "SteamUser": {
+  "zero": [
+   "AckGuestPass",
+   "AcknowledgeMessageByGID",
+   "AcknowledgeVACBanning",
+   "AddServerNetAddress",
+   "BSetDurationControlOnlineState",
+   "GetAuthTicketForWebApi",
+   "GetEncryptedAppTicket",
+   "GetGuestPassLastUpdateTime",
+   "GetGuestPassToGiveCount",
+   "GetGuestPassToGiveInfo",
+   "GetGuestPassToRedeemCount",
+   "GetGuestPassToRedeemInfo",
+   "GetGuestPassToRedeemSenderAddress",
+   "GetGuestPassToRedeemSenderName",
+   "GetLogonState",
+   "GetRegistryString",
+   "GetSteamGameConnectToken",
+   "IsVACBanned",
+   "LogOff",
+   "LogOn",
+   "NClientGameIDAdd",
+   "RedeemGuestPass",
+   "RefreshSteam2Login",
+   "RemoveClientGame",
+   "RequestLegacyCDKey",
+   "RequireShowVACBannedMessage",
+   "SendGuestPassByAccountID",
+   "SendGuestPassByEmail",
+   "SetAccountCreationTime",
+   "SetAccountName",
+   "SetClientGameServer",
+   "SetEmail",
+   "SetLanguage",
+   "SetPassword",
+   "SetRegistryString",
+   "SetSelfAsPrimaryChatDestination",
+   "SetSteam2Ticket"
+  ]
+ },
+ "SteamUtils": {
+  "true": [
+   "InitFilterText"
+  ],
+  "void": [
+   "SetGameLauncherMode",
+   "SetOverlayNotificationInset",
+   "SetVRHeadsetStreamingEnabled",
+   "StartVRDashboard"
+  ],
+  "zero": [
+   "GetCSERIPPort",
+   "GetIPv6ConnectivityState",
+   "GetImageRGBA",
+   "GetImageSize",
+   "GetSteamHardwareDefaultConfig",
+   "IsRunningOnSteamHardware"
+  ]
+ }
+}

@@ -1,0 +1,44 @@
+pub(crate) mod auth;
+pub(crate) mod bridge;
+pub(crate) mod capabilities;
+pub(crate) mod cloud;
+pub(crate) mod collections;
+pub(crate) mod common;
+pub(crate) mod config;
+pub(crate) mod info;
+pub(crate) mod install;
+pub(crate) mod launch;
+pub(crate) mod library;
+pub(crate) mod market;
+pub(crate) mod plugins;
+#[cfg(unix)]
+pub(crate) mod plus;
+pub(crate) mod runtimes;
+pub(crate) mod scripts;
+pub(crate) mod service;
+pub(crate) mod shortcut;
+pub(crate) mod social;
+pub(crate) mod store;
+pub(crate) mod workshop;
+
+pub(crate) use self::auth::*;
+pub(crate) use self::bridge::*;
+pub(crate) use self::capabilities::cmd_capabilities;
+pub(crate) use self::cloud::*;
+pub(crate) use self::collections::*;
+pub(crate) use self::common::*;
+pub(crate) use self::config::*;
+pub(crate) use self::info::*;
+pub(crate) use self::install::*;
+pub(crate) use self::launch::*;
+pub(crate) use self::library::*;
+pub(crate) use self::market::*;
+pub(crate) use self::plugins::*;
+#[cfg(unix)]
+pub(crate) use self::plus::*;
+pub(crate) use self::runtimes::*;
+pub(crate) use self::scripts::*;
+pub(crate) use self::shortcut::{cmd_shortcut_add, cmd_shortcut_list, cmd_shortcut_remove};
+pub(crate) use self::social::*;
+pub(crate) use self::store::*;
+pub(crate) use self::workshop::*;

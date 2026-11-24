@@ -1,0 +1,5 @@
+LIBRARY windows.ui.core.textinput
+EXPORTS
+DllGetActivationFactory PRIVATE
+DllCanUnloadNow PRIVATE
+DllGetClassObject PRIVATE

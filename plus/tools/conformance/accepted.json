@@ -1,0 +1,112 @@
+{
+ "rules": [
+  {
+   "pattern": "STEAMAPPLIST_INTERFACE_VERSION*.GetNumInstalledApps",
+   "reason": "the shim reads the apps installed by Aurelia; the real Steam under Proton does not see them (0)"
+  },
+  {
+   "pattern": "STEAMAPPS_INTERFACE_VERSION*.GetBetaInfo",
+   "reason": "beta branches: the shim reads them from appinfo (snapshot); the probe runs without an app and without branches, the real one answers the client's"
+  },
+  {
+   "pattern": "STEAMAPPS_INTERFACE_VERSION*.GetNumBetas",
+   "reason": "beta branches: the shim reads them from appinfo (snapshot); the probe runs without an app and without branches, the real one answers the client's"
+  },
+  {
+   "pattern": "STEAMAPPS_INTERFACE_VERSION*.SetActiveBeta",
+   "reason": "beta branches: the shim reads them from appinfo (snapshot); the probe runs without an app and without branches, the real one answers the client's"
+  },
+  {
+   "pattern": "STEAMHTMLSURFACE_INTERFACE_VERSION_*.Init",
+   "reason": "there is no embedded browser: Init fails on purpose so the game does not wait for a page"
+  },
+  {
+   "pattern": "STEAMHTTP_INTERFACE_VERSION*.SetHTTPRequestRequiresVerifiedCertificate",
+   "reason": "with handle 0 the real one returns true; the shim only accepts an existing request"
+  },
+  {
+   "pattern": "STEAMINVENTORY_INTERFACE_V*.TransferItemQuantity",
+   "reason": "zeroed input: the real one accepts the request, the shim refuses what has no item"
+  },
+  {
+   "pattern": "STEAMINVENTORY_INTERFACE_V*.GetResultTimestamp",
+   "reason": "clock"
+  },
+  {
+   "pattern": "STEAMREMOTEPLAY_INTERFACE_VERSION*.BStartRemotePlayTogether",
+   "reason": "Remote Play out of scope (D5)"
+  },
+  {
+   "pattern": "STEAMREMOTESTORAGE_INTERFACE_VERSION*.GetUGCDownloadProgress",
+   "reason": "zeroed handle"
+  },
+  {
+   "pattern": "STEAMREMOTESTORAGE_INTERFACE_VERSION*.GetLocalFileChange",
+   "reason": "state of the real client (files changed outside the game)"
+  },
+  {
+   "pattern": "STEAMSCREENSHOTS_INTERFACE_VERSION*.AddScreenshotToLibrary",
+   "reason": "zeroed input (no file)"
+  },
+  {
+   "pattern": "STEAMTIMELINE_INTERFACE_V*.*",
+   "reason": "empty input: the shim returns a valid handle and ignores it"
+  },
+  {
+   "pattern": "SteamBilling*.*",
+   "reason": "legacy billing interface, unused by games"
+  },
+  {
+   "pattern": "SteamFriends*.GetFriendCount",
+   "reason": "the friends list arrives after the first use on the real one; the result varies with timing"
+  },
+  {
+   "pattern": "SteamMatchMaking*.SetLobbyMemberData",
+   "reason": "zeroed input"
+  },
+  {
+   "pattern": "SteamNetworking*.CreateListenSocket",
+   "reason": "socket handle numbers differ by nature"
+  },
+  {
+   "pattern": "SteamNetworking*.CreateConnectionSocket",
+   "reason": "socket handle numbers differ by nature"
+  },
+  {
+   "pattern": "SteamNetworkingSockets*.*",
+   "reason": "zeroed input (nonexistent connection)"
+  },
+  {
+   "pattern": "SteamParties*.*",
+   "reason": "zeroed input"
+  },
+  {
+   "pattern": "SteamUtils*.IsVRHeadsetStreamingEnabled",
+   "reason": "VR out of scope"
+  },
+  {
+   "pattern": "SteamNetworkingUtils*.GetRelayNetworkStatus",
+   "reason": "SDR (Valve relay) not implemented: the client-relay protocol is closed. With the embedded networking library the shim answers CannotTry (no relay), like the open GameNetworkingSockets; the real one answers Waiting/Attempting while it measures the relays. P2P works through ICE (STUN) without a relay"
+  },
+  {
+   "pattern": "SteamNetworkingUtils*.IsPingMeasurementInProgress",
+   "reason": "SDR (Valve relay) not implemented: without pinging the relays, there is no measurement in progress"
+  },
+  {
+   "pattern": "SteamNetworkingUtils*.IterateGenericEditableConfigValues",
+   "reason": "the configuration table is that of the open GameNetworkingSockets (without the SDR values), in the native Utils004; in the old versions the shim adapter does not walk it"
+  },
+  {
+   "pattern": "SteamNetworkingUtils*.GetNextConfigValue",
+   "reason": "the configuration table is that of the open GameNetworkingSockets (without the SDR values), in the native Utils004; in the old versions the shim adapter does not walk it"
+  },
+  {
+   "pattern": "SteamFriends*.GetCoplayFriendCount",
+   "reason": "PENDING: the coplay history from before Aurelia comes from Steam through message 5410 (ClientGamesPlayedWithDataBlob), whose format has not been decoded yet; the shim counts what the games registered through Aurelia"
+  },
+  {
+   "pattern": "SteamMatchMakingServers*.RequestLANServerList",
+   "reason": "the real one returns an opaque pointer (HServerListRequest) and the shim a small number; the value is only meant to be handed back to the shim"
+  }
+ ]
+}
