@@ -76,6 +76,18 @@ fn shader_reporter(json: bool, in_play: bool) -> aurelia::launch::shaders::Shade
     })
 }
 
+/// What Aurelia does before the game starts, as a line for the launcher (`{"event":"setup","text":...}`) or for the terminal.
+fn setup_reporter(json: bool) -> Arc<dyn Fn(String) + Send + Sync> {
+    Arc::new(move |text: String| {
+        if json {
+            cli_println!("{}", serde_json::json!({ "event": "setup", "text": text }));
+        } else {
+            cli_eprintln!("{text}");
+        }
+    })
+}
+
+/// `aurelia shaders <app_id>`: replay on demand.
 pub(crate) async fn cmd_shaders(app_id: u32, force: bool, json: bool) -> Result<()> {
     use aurelia::launch::shaders::{self, ShaderEvent};
     if !cfg!(target_os = "linux") {
@@ -484,6 +496,7 @@ pub(crate) async fn cmd_play(
             aurelia::launch::shaders::ShaderLaunch {
                 skip: wait.skip_shaders,
                 on_event: Some(shader_reporter(json, true)),
+                on_setup: Some(setup_reporter(json)),
             },
         )
         .await

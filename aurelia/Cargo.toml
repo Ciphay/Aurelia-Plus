@@ -71,6 +71,7 @@ protobuf-codegen = "3.5"
 windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System_Console", "Win32_System_Registry", "Win32_System_Threading", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging"] }
 
 [patch.crates-io]
+aurelia-steam-cdn = { path = "vendor/aurelia-steam-cdn" } # chunks already on disk are checked on a few low-priority threads (verify_pool)
 aurelia-steam-vent = { path = "vendor/aurelia-steam-vent" }
 
 [profile.release]

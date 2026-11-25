@@ -815,6 +815,61 @@ pub(crate) async fn cmd_update(app_id: u32, force: bool, json: bool) -> Result<(
     Ok(())
 }
 
+/// How long `update <id> --check` waits for Steam. A launcher asks this right before opening a game: a connection that does not answer
+/// must not hold the game back, so past this the answer is "no update known".
+const UPDATE_CHECK_BUDGET: std::time::Duration = std::time::Duration::from_secs(4);
+
+/// `aurelia update <APP_ID> --check`: does this one installed game have an update? Quick (the library comes from the cache and the installed
+/// manifests, only the depot manifests of this game are asked of Steam) and nothing is downloaded or changed. Offline, or if Steam does not
+/// answer in time, the answer is `update_available: false` with `checked: false`.
+pub(crate) async fn cmd_update_check(app_id: u32, json: bool) -> Result<()> {
+    let (pinned, _) = aurelia::core::config::game_pin_state(app_id).await;
+    let mut client = match launch_access().await? {
+        LaunchAccess::Online(c) | LaunchAccess::Offline(c) => c,
+        LaunchAccess::NoAccount(_) => authed_client().await?,
+    };
+    let owned = aurelia::core::config::load_library_cache().await.unwrap_or_default();
+    let installed = aurelia::library::scan_installed_app_info().await.unwrap_or_default();
+    let mut games = aurelia::library::build_game_library(owned, installed, client.steam_id()).games;
+    games.retain(|g| g.app_id == app_id && g.is_installed);
+    let Some(game) = games.first_mut() else {
+        return Err(TypedError::new(ErrorKind::NotFound, format!("app {app_id} is not installed")).into());
+    };
+    let mut checked = false;
+    let mut update = false;
+    if client.is_authenticated() && !client.is_offline() {
+        match tokio::time::timeout(UPDATE_CHECK_BUDGET, client.check_for_updates(std::slice::from_mut(game))).await {
+            Ok(Ok(())) => {
+                checked = true;
+                update = game.update_available;
+            }
+            Ok(Err(e)) => tracing::warn!("update check of {app_id} failed: {e:#}"),
+            Err(_) => tracing::warn!("update check of {app_id} did not finish in {UPDATE_CHECK_BUDGET:?}"),
+        }
+    }
+    let update = update && !pinned;
+    if json {
+        print_json(&serde_json::json!({
+            "app_id": app_id,
+            "name": game.name,
+            "update_available": update,
+            "pinned": pinned,
+            "checked": checked,
+        }));
+    } else if update {
+        cli_println!("{} has an update. Run `aurelia update {app_id}` to install it.", game.name);
+    } else if pinned {
+        cli_println!("{} is pinned.", game.name);
+    } else if checked {
+        cli_println!("{} is up to date.", game.name);
+    } else {
+        cli_println!("Could not check {} for updates right now.", game.name);
+    }
+    Ok(())
+}
+
+/// `aurelia update` with no app id: list every installed game whose active branch
+/// has a newer build available than what's on disk.
 pub(crate) async fn cmd_check_updates(json: bool) -> Result<()> {
     let mut client = authed_client().await?;
     if client.is_offline() {

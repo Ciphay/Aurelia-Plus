@@ -29,6 +29,8 @@ pub type ShaderProgressFn = Arc<dyn Fn(ShaderEvent) + Send + Sync>;
 pub struct ShaderLaunch {
     pub skip: bool,
     pub on_event: Option<ShaderProgressFn>,
+    /// Told what Aurelia does before the game starts (install script, redistributables).
+    pub on_setup: Option<Arc<dyn Fn(String) + Send + Sync>>,
 }
 
 pub fn shader_cache_dir(install_dir: &Path, app_id: u32) -> Option<PathBuf> {

@@ -149,6 +149,24 @@ pub(crate) enum LaunchAccess {
     NoAccount(SteamClient),
 }
 
+/// The client a game launch uses. Like Steam: with a saved account and no network it starts offline (and the daemon keeps trying
+/// to get online in the background); with no account only manual games start.
+/// Is a failed session restore only Steam or the network being out of reach (so the game starts offline with the saved account), as
+/// opposed to a token Steam refused? A timeout and "ServiceUnavailable" of the login are the first kind even when they are classified as
+/// `auth_required` or `unknown`: only a refusal (denied, expired, access denied) means the account has to sign in again.
+pub(crate) fn restore_failure_is_transient(kind: ErrorKind, reason: &str) -> bool {
+    match kind {
+        ErrorKind::Offline | ErrorKind::NetworkTimeout | ErrorKind::Timeout | ErrorKind::RateLimited => true,
+        ErrorKind::LoginDenied | ErrorKind::LoginExpired | ErrorKind::AccessDenied => false,
+        _ => {
+            let text = reason.to_ascii_lowercase();
+            ["timed out", "serviceunavailable", "service unavailable", "unreachable", "network", "connection", "dns"]
+                .iter()
+                .any(|needle| text.contains(needle))
+        }
+    }
+}
+
 pub(crate) async fn launch_access() -> Result<LaunchAccess> {
     let mut client = restored_client().await?;
     if client.is_authenticated() {
@@ -166,8 +184,10 @@ pub(crate) async fn launch_access() -> Result<LaunchAccess> {
         return Ok(LaunchAccess::NoAccount(client));
     }
     let offline = match daemon::last_restore_error().await {
-        Some((kind, _, _)) => kind == ErrorKind::Offline,
-        None => client.restore_error().is_some_and(|e| aurelia::core::error::classify(e).kind == ErrorKind::Offline),
+        Some((kind, _, reason)) => restore_failure_is_transient(kind, &reason),
+        None => client
+            .restore_error()
+            .is_some_and(|e| restore_failure_is_transient(aurelia::core::error::classify(e).kind, &format!("{e:#}"))),
     };
     if offline {
         client.enter_offline_with_account();
@@ -786,3 +806,17 @@ pub(crate) fn prompt_line(prompt: &str) -> Result<String> {
 #[cfg(test)]
 #[path = "common_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+mod restore_tests {
+    use super::*;
+
+    #[test]
+    fn timeouts_and_outages_start_the_game_offline_but_a_refused_token_does_not() {
+        assert!(restore_failure_is_transient(ErrorKind::AuthRequired, "refresh token login failed: Steam CM connection timed out after 10s"));
+        assert!(restore_failure_is_transient(ErrorKind::Unknown, "Login failed: unknown error ServiceUnavailable"));
+        assert!(restore_failure_is_transient(ErrorKind::NetworkTimeout, ""));
+        assert!(!restore_failure_is_transient(ErrorKind::LoginDenied, "network"));
+        assert!(!restore_failure_is_transient(ErrorKind::AuthRequired, "the refresh token was revoked"));
+    }
+}

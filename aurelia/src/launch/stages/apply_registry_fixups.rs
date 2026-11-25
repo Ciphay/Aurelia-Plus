@@ -70,7 +70,7 @@ impl PipelineStage for ApplyRegistryFixupsStage {
 }
 
 #[cfg_attr(not(unix), allow(dead_code))]
-fn resolve_prefix_wine(runner: &Path) -> PathBuf {
+pub(crate) fn resolve_prefix_wine(runner: &Path) -> PathBuf {
     if let Some(wine) = crate::core::utils::proton_bundled_bare_wine(runner) {
         return wine;
     }

@@ -1,0 +1,240 @@
+// Modified by Aurelia; see README.
+use lzma_rs::decompress::raw::{LzmaDecoder, LzmaParams, LzmaProperties};
+use std::io::{Cursor, SeekFrom};
+use tokio::{
+    io::{AsyncReadExt, AsyncSeekExt},
+    task,
+};
+
+use crate::Error;
+
+const VZ_HEADER: u16 = 0x5A56;
+const VZ_FOOTER: u16 = 0x767A;
+const VZ_VERSION: char = 'a';
+const VZ_HEADER_LENGTH: usize = 7;
+const VZ_FOOTER_LENGTH: usize = 10;
+
+// Steam's newer Zstandard chunk container. Layout mirrors VZ:
+//   header: "VSZ" + version 'a' + crc32(4) = 8 bytes
+//   body:   a single raw Zstandard frame (self-delimiting; carries its own size)
+//   footer: trailing fields ending in the "zsv" magic
+const VSZ_HEADER: [u8; 3] = [b'V', b'S', b'Z'];
+const VSZ_VERSION: u8 = b'a';
+const VSZ_HEADER_LENGTH: usize = 8;
+const VSZ_FOOTER_MAGIC: [u8; 3] = [b'z', b's', b'v'];
+const VSZ_FOOTER_LENGTH: usize = 11;
+
+/// Largest chunk accepted, any format.
+pub const MAX_CHUNK_LEN: usize = 64 << 20;
+
+/// Smallest valid VZ container.
+const VZ_MIN_LENGTH: usize = VZ_HEADER_LENGTH + 5 + VZ_FOOTER_LENGTH;
+
+/// Read up to `max_len` bytes.
+pub fn read_bounded<R: std::io::Read>(reader: R, max_len: usize) -> Result<Vec<u8>, Error> {
+    let mut out = Vec::new();
+    let limit = (max_len as u64).saturating_add(1);
+    std::io::Read::read_to_end(&mut reader.take(limit), &mut out)?;
+    if out.len() > max_len {
+        return Err(Error::Decompress(format!(
+            "decompressed data exceeds {max_len} bytes"
+        )));
+    }
+    Ok(out)
+}
+
+pub fn is_vz(data: &[u8]) -> bool {
+    data.len() >= 2 && u16::from_le_bytes([data[0], data[1]]) == VZ_HEADER
+}
+
+pub fn is_vsz(data: &[u8]) -> bool {
+    data.len() >= 4 && data[0..3] == VSZ_HEADER && data[3] == VSZ_VERSION
+}
+
+/// Decompress a VSZ (Zstandard) chunk.
+pub fn decompress_vsz(data: &[u8], max_len: usize) -> Result<Vec<u8>, Error> {
+    let max_len = max_len.min(MAX_CHUNK_LEN);
+    if !is_vsz(data) {
+        return Err(Error::Decompress("expecting VSZ header".to_string()));
+    }
+    if data.len() < VSZ_HEADER_LENGTH + VSZ_FOOTER_LENGTH {
+        return Err(Error::Eof("VSZ chunk too small".to_string()));
+    }
+    if data[data.len() - 3..] != VSZ_FOOTER_MAGIC {
+        return Err(Error::Decompress("expecting zsv at end of stream".to_string()));
+    }
+
+    // The Zstandard frame sits between the fixed header and footer. It is
+    // self-delimiting and carries its own content size, so ruzstd stops at the end of
+    // the frame; the trailing footer bytes are simply not consumed.
+    let frame = &data[VSZ_HEADER_LENGTH..data.len() - VSZ_FOOTER_LENGTH];
+    let mut decoder = ruzstd::StreamingDecoder::new(std::io::Cursor::new(frame))
+        .map_err(|e| Error::Decompress(format!("zstd frame: {e}")))?;
+    read_bounded(&mut decoder, max_len)
+}
+
+/// Decompress a VZ (LZMA) chunk.
+pub async fn decompress(data: &[u8], max_len: usize) -> Result<Vec<u8>, Error> {
+    let max_len = max_len.min(MAX_CHUNK_LEN);
+    if data.len() < VZ_MIN_LENGTH {
+        return Err(Error::Eof("VZ chunk too small".to_string()));
+    }
+    let mut cursor = Cursor::new(data);
+    if cursor.read_u16_le().await? != VZ_HEADER {
+        return Err(Error::Eof("expecting VZ header".to_string()));
+    }
+
+    if cursor.read_u8().await? != VZ_VERSION as u8 {
+        return Err(Error::Eof("expecting VZ header".to_string()));
+    }
+
+    let mut properties = [0u8; 5];
+    cursor.seek(SeekFrom::Current(4)).await?; // skip crc32
+    cursor.read_exact(&mut properties).await?;
+
+    let buffer_size =
+        cursor.get_ref().len() - properties.len() - VZ_HEADER_LENGTH - VZ_FOOTER_LENGTH;
+    let mut buffer = vec![0u8; buffer_size];
+    cursor.read_exact(&mut buffer).await?;
+
+    let decompressed_crc32 = cursor.read_u32_le().await?;
+    let decompressed_size = cursor.read_u32_le().await?;
+
+    if cursor.read_u16_le().await? != VZ_FOOTER {
+        return Err(Error::Eof("expecting VZ at end of stream".to_string()));
+    }
+    if decompressed_size as usize > max_len {
+        return Err(Error::Decompress(format!(
+            "VZ declares {decompressed_size} bytes, limit is {max_len}"
+        )));
+    }
+
+    let decompressed_data = task::spawn_blocking(move || -> Result<Vec<u8>, Error> {
+        let mut decompressed = Vec::with_capacity(decompressed_size as usize);
+
+        let lc = (properties[0] % 9) as u32;
+        let remainder = (properties[0] / 9) as u32;
+        let lp = remainder % 5;
+        let pb = remainder / 5;
+
+        let mut dict_size = 0u32;
+
+        for i in 0..4 {
+            dict_size += (properties[1 + i] as u32) << (i * 8);
+        }
+
+        LzmaDecoder::new(
+            LzmaParams::new(
+                LzmaProperties { lc, lp, pb },
+                dict_size,
+                Some(decompressed_size as u64),
+            ),
+            None,
+        )?
+        .decompress(&mut Cursor::new(buffer), &mut decompressed)?;
+
+        Ok(decompressed)
+    })
+    .await??;
+
+    if decompressed_data.len() != decompressed_size as usize {
+        return Err(Error::Decompress("VZ size mismatch".to_string()));
+    }
+    if decompressed_crc32 != crc32fast::hash(&decompressed_data) {
+        return Err(Error::Decompress("crc32 mismatch".to_string()));
+    }
+
+    Ok(decompressed_data)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn read_bounded_allows_exact_limit() {
+        assert_eq!(read_bounded(&[7u8; 16][..], 16).unwrap().len(), 16);
+    }
+
+    #[test]
+    fn read_bounded_rejects_overflow() {
+        assert!(matches!(read_bounded(&[7u8; 17][..], 16), Err(Error::Decompress(_))));
+    }
+
+    #[tokio::test]
+    async fn short_vz_is_rejected_not_underflowed() {
+        // Valid header, nothing after it.
+        let data = [0x56, 0x5A, b'a', 0, 0, 0, 0, 0, 0, 0];
+        assert!(matches!(decompress(&data, 1024).await, Err(Error::Eof(_))));
+    }
+
+    #[tokio::test]
+    async fn vz_declared_size_over_limit_is_rejected() {
+        let mut data = vec![0x56, 0x5A, b'a', 0, 0, 0, 0];
+        data.extend_from_slice(&[0x5D, 0, 0, 1, 0]);
+        data.extend_from_slice(&[0u8; 4]);
+        data.extend_from_slice(&0u32.to_le_bytes());
+        data.extend_from_slice(&u32::MAX.to_le_bytes());
+        data.extend_from_slice(&0x767Au16.to_le_bytes());
+        assert!(matches!(decompress(&data, 1024).await, Err(Error::Decompress(_))));
+    }
+
+    fn vz_declaring(size: u32) -> Vec<u8> {
+        let mut data = vec![0x56, 0x5A, b'a', 0, 0, 0, 0];
+        data.extend_from_slice(&[0x5D, 0, 0, 1, 0]);
+        data.extend_from_slice(&[0u8; 4]);
+        data.extend_from_slice(&0u32.to_le_bytes());
+        data.extend_from_slice(&size.to_le_bytes());
+        data.extend_from_slice(&0x767Au16.to_le_bytes());
+        data
+    }
+
+    #[tokio::test]
+    async fn vz_over_ceiling_rejected_despite_caller_limit() {
+        // Caller allows 4 GiB; ceiling wins.
+        let data = vz_declaring(MAX_CHUNK_LEN as u32 + 1);
+        let err = decompress(&data, u32::MAX as usize).await.unwrap_err();
+        assert!(matches!(err, Error::Decompress(_)), "{err}");
+    }
+
+    /// Zstd frame of `len` zero bytes.
+    fn rle_zstd_frame(len: usize) -> Vec<u8> {
+        const BLOCK: usize = 128 * 1024;
+        // Magic, no flags, 2 MiB window.
+        let mut out = vec![0x28, 0xB5, 0x2F, 0xFD, 0x00, 0x58];
+        let mut left = len;
+        while left > 0 {
+            let n = left.min(BLOCK);
+            left -= n;
+            let last = u32::from(left == 0);
+            // RLE block header, little endian.
+            let header = last | (1 << 1) | ((n as u32) << 3);
+            out.extend_from_slice(&header.to_le_bytes()[..3]);
+            out.push(0);
+        }
+        out
+    }
+
+    #[test]
+    fn rle_frame_decodes_under_ceiling() {
+        let mut data = b"VSZa".to_vec();
+        data.extend_from_slice(&[0u8; 4]);
+        data.extend_from_slice(&rle_zstd_frame(300_000));
+        data.extend_from_slice(&[0u8; 8]);
+        data.extend_from_slice(b"zsv");
+        assert_eq!(decompress_vsz(&data, usize::MAX).unwrap().len(), 300_000);
+    }
+
+    #[test]
+    fn vsz_limit_is_capped_at_ceiling() {
+        // Over-ceiling frame never fully decoded.
+        let frame = rle_zstd_frame(MAX_CHUNK_LEN + 1);
+        let mut data = b"VSZa".to_vec();
+        data.extend_from_slice(&[0u8; 4]);
+        data.extend_from_slice(&frame);
+        data.extend_from_slice(&[0u8; 8]);
+        data.extend_from_slice(b"zsv");
+        let err = decompress_vsz(&data, usize::MAX).unwrap_err();
+        assert!(matches!(err, Error::Decompress(_)), "{err}");
+    }
+}

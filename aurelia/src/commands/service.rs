@@ -47,7 +47,6 @@ pub(crate) fn service_unit(exe: &Path) -> String {
          Nice=10\n\
          IOSchedulingClass=best-effort\n\
          IOSchedulingPriority=7\n\
-         MemoryHigh=1G\n\
          Restart=on-failure\n\
          RestartSec=30\n\
          SuccessExitStatus=SIGKILL SIGTERM\n\

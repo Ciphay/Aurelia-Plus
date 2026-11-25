@@ -628,6 +628,24 @@ impl SteamClient {
                 },
             );
 
+            // The whole-app total up front, from the sizes the appmanifest records for the installed depots (an update or a verify
+            // touches the same depots): the bar then has one total from the start instead of growing as each depot begins. If a depot
+            // has no recorded size the total stays 0 and the per-depot accumulation applies.
+            let grand_total_bytes = {
+                let sizes = std::fs::read_to_string(&manifest_path)
+                    .map(|raw| crate::steam_client::parse_installed_depot_sizes_from_acf(&raw))
+                    .unwrap_or_default();
+                let per_depot: Vec<u64> = selections.iter().map(|s| sizes.get(&(s.depot_id as u64)).copied().unwrap_or(0)).collect();
+                if per_depot.iter().all(|&n| n > 0) { per_depot.iter().sum() } else { 0 }
+            };
+            // With a total given, the per-depot callbacks no longer add to it, so it has to be set here.
+            if grand_total_bytes > 0 {
+                if let Ok(mut state) = shared_state_clone.write() {
+                    state.total_bytes = grand_total_bytes;
+                }
+            }
+
+            // Zero grand total: per-depot accumulation.
             let Some(successful_depots) = run_depot_loop(
                 &client_clone,
                 &connection,
@@ -639,7 +657,7 @@ impl SteamClient {
                 &hosts,
                 &DepotLoopOpts {
                     verify_mode,
-                    grand_total_bytes: 0,
+                    grand_total_bytes,
                     manifest_overrides: None,
                 },
             )

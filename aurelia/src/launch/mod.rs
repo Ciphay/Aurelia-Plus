@@ -1,6 +1,7 @@
 pub mod dll_provider_resolver;
 pub mod fixups;
 pub mod game_process;
+pub mod install_scripts;
 pub mod launch_script;
 pub mod pipeline;
 pub mod shaders;

@@ -126,6 +126,9 @@ pub(crate) enum Command {
         app_id: Option<u32>,
         #[arg(short = 'f', long)]
         force: bool,
+        /// Only check whether this game has an update, quickly and without downloading anything (needs an app id).
+        #[arg(long, requires = "app_id", conflicts_with = "force")]
+        check: bool,
     },
     Play {
         app_id: u32,

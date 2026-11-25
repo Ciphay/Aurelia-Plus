@@ -33,7 +33,16 @@ fn main() {
         .name("aurelia-main".to_string())
         .stack_size(32 * 1024 * 1024)
         .spawn(|| {
+            // Threads that follow the PC instead of one worker per core: the daemon serves the Steam connection, the games' bridge and the
+            // downloads, and on every core at once it competes with the launcher's UI and the game for the CPU. A few workers handle the
+            // network; the blocking pool (decompression, disk) is capped too. AURELIA_WORKER_THREADS / AURELIA_BLOCKING_THREADS override.
+            let cores = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4);
+            let from_env = |name: &str| std::env::var(name).ok().and_then(|v| v.trim().parse::<usize>().ok()).filter(|n| *n >= 1);
+            let workers = from_env("AURELIA_WORKER_THREADS").unwrap_or((cores / 4).clamp(2, 4));
+            let blocking = from_env("AURELIA_BLOCKING_THREADS").unwrap_or((cores / 2).clamp(4, 8));
             let runtime = tokio::runtime::Builder::new_multi_thread()
+                .worker_threads(workers)
+                .max_blocking_threads(blocking)
                 .enable_all()
                 .thread_stack_size(16 * 1024 * 1024)
                 .build()
@@ -402,7 +411,8 @@ async fn run(mut cli: Cli) -> Result<()> {
         Command::DebugServers { app_id, filter } => cmd_debug_servers(app_id, filter).await,
         Command::Verify { app_id } => cmd_verify(app_id, json).await,
         Command::Duplicates => cmd_duplicates(json).await,
-        Command::Update { app_id, force } => match app_id {
+        Command::Update { app_id, force, check } => match app_id {
+            Some(id) if check => cmd_update_check(id, json).await,
             Some(id) => cmd_update(id, force, json).await,
             None => cmd_check_updates(json).await,
         },

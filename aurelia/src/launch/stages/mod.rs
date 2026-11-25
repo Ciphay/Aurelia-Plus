@@ -9,6 +9,7 @@ pub mod resolve_components;
 pub mod resolve_dll_providers;
 pub mod resolve_game;
 pub mod resolve_game_fixups;
+pub mod apply_install_script;
 pub mod apply_registry_fixups;
 pub mod resolve_profile;
 pub mod spawn_process;

@@ -669,6 +669,9 @@ impl SteamClient {
                     abort_signal,
                     Some(on_progress),
                     Some(on_manifest.clone()),
+                    Some(Arc::new(move |files: Vec<String>| {
+                        crate::launch::install_scripts::save_depot(app_id, depot_id, files)
+                    })),
                 )
                 .await
             {

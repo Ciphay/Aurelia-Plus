@@ -88,6 +88,8 @@ pub struct PipelineContext {
     pub steam_enabled: bool,
     pub skip_shaders: bool,
     pub on_shader_event: Option<crate::launch::shaders::ShaderProgressFn>,
+    /// What Aurelia is doing before the game starts ("Aurelia is installing ...") for the caller to show.
+    pub on_setup_note: Option<std::sync::Arc<dyn Fn(String) + Send + Sync>>,
 
     pub resolved_install_dir: Option<std::path::PathBuf>,
     pub resolved_executable_path: Option<std::path::PathBuf>,
@@ -199,6 +201,7 @@ impl PipelineContext {
             steam_enabled: false,
             skip_shaders: false,
             on_shader_event: None,
+            on_setup_note: None,
             resolved_install_dir: None,
             resolved_executable_path: None,
             executable_exists: false,
@@ -630,6 +633,9 @@ impl LaunchPipeline {
         ));
         pipeline.add_stage(Box::new(
             crate::launch::stages::apply_registry_fixups::ApplyRegistryFixupsStage,
+        ));
+        pipeline.add_stage(Box::new(
+            crate::launch::stages::apply_install_script::ApplyInstallScriptStage,
         ));
         pipeline.add_stage(Box::new(
             crate::launch::stages::spawn_process::SpawnProcessStage,

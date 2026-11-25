@@ -561,6 +561,7 @@ NoSavePersonalInfo=1
         ctx.steam_enabled = steam_enabled;
         ctx.skip_shaders = shaders.skip;
         ctx.on_shader_event = shaders.on_event;
+        ctx.on_setup_note = shaders.on_setup;
 
         if let Ok(config_dir) = crate::core::config::config_dir() {
             let session = LaunchSession::new(&config_dir.join("logs"));

@@ -2104,6 +2104,42 @@ fn parse_installed_depots_from_acf(raw: &str) -> HashMap<u64, u64> {
     manifests
 }
 
+/// `InstalledDepots` → depot id → size in bytes (of the build that is installed).
+pub(crate) fn parse_installed_depot_sizes_from_acf(raw: &str) -> HashMap<u64, u64> {
+    let mut sizes = HashMap::new();
+    let mut in_installed_depots = false;
+    let mut current_depot: Option<u64> = None;
+
+    for line in raw.lines() {
+        let trimmed = line.trim();
+        if trimmed.contains("\"InstalledDepots\"") {
+            in_installed_depots = true;
+            continue;
+        }
+        if !in_installed_depots {
+            continue;
+        }
+        if trimmed == "}" {
+            if current_depot.is_some() {
+                current_depot = None;
+                continue;
+            }
+            break;
+        }
+        let quoted = extract_quoted_values(trimmed);
+        if quoted.len() == 1 {
+            if let Ok(depot_id) = u64::from_str(&quoted[0]) {
+                current_depot = Some(depot_id);
+            }
+        } else if quoted.len() >= 2 && quoted[0] == "size" {
+            if let (Some(depot), Ok(size)) = (current_depot, u64::from_str(&quoted[1])) {
+                sizes.insert(depot, size);
+            }
+        }
+    }
+    sizes
+}
+
 fn parse_active_branch_from_acf(raw: &str) -> String {
     crate::core::acf::parse_app_manifest(raw).active_branch
 }
