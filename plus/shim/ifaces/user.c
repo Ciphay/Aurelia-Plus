@@ -128,6 +128,7 @@ static uint32_t auth_ticket_impl(void *buf, int cb_max, uint32_t *pcb, bool post
     }
     if (via == BRIDGE_REFUSED && shim_connection_online()) return 0;
     if (via == BRIDGE_REFUSED) shim_log("GetAuthSessionTicket: Steam is down, ticket built from the snapshot fallback");
+
     if (!s || !s->has_ticket) { shim_log("GetAuthSessionTicket: snapshot has no ticket"); return 0; }
     const ShimTicket *t = &s->ticket;
     size_t need = 4 + t->token_len + 4 + 24 + 4 + t->ownership_len;
@@ -498,7 +499,9 @@ static uint32_t SHIM_TC has_license(void *self, uint64_t id, uint32_t appid) {
     return session_has(id, appid) ? 0 : 2;
 }
 
+static uint64_t SHIM_TC set_duration_control_state(void *self, int state) { (void)self; (void)state; return 1; }
 void register_user(void) {
+    shim_register_family("SteamUser", "BSetDurationControlOnlineState", (void *)set_duration_control_state);
     shim_register_family("SteamUser", "GetHSteamUser", (void *)get_hsteamuser);
     shim_register_family("SteamUser", "BLoggedOn", (void *)logged_on);
     shim_register_family("SteamUser", "GetSteamID", (void *)get_steamid);

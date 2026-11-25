@@ -40,6 +40,7 @@ static bool parse_ticket(const CmReply *r, void *ctx, void *out, int *size) {
     } else if (eresult == 1) {
         eresult = 2;
     }
+    shim_log("EncryptedAppTicket reply: eresult=%d ticket=%lu bytes", (int)eresult, (unsigned long)ticket_len);
     memcpy(out, &eresult, 4);
     *size = 4;
     return true;
@@ -48,6 +49,7 @@ static bool parse_ticket(const CmReply *r, void *ctx, void *out, int *size) {
 static uint64_t SHIM_TC request_encrypted(void *self, const void *data, int cb) {
     (void)self;
     uint64_t call = shim_callresult_reserve();
+    shim_trace("RequestEncryptedAppTicket cb=%d call=%llu", cb, (unsigned long long)call);
     if (cb < 0 || (cb && !data)) { shim_callresult_fail_handle(call); return call; }
     PbW w = {0};
     pbw_varint(&w, 1, app_id());
@@ -59,6 +61,7 @@ static uint64_t SHIM_TC request_encrypted(void *self, const void *data, int cb) 
 static uint64_t SHIM_TC get_encrypted(void *self, void *buf, int max, uint32_t *size) {
     (void)self;
     bool ok = false;
+    shim_trace("GetEncryptedAppTicket max=%d have=%lu", max, (unsigned long)g_ticket_len);
     AcquireSRWLockExclusive(&g_lock);
     if (g_ticket && size) {
         *size = (uint32_t)g_ticket_len;

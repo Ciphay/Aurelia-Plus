@@ -38,7 +38,9 @@ static void SHIM_TC init_relay_access(void *self) {
 
 static void *SHIM_TC allocate_message(void *self, int cb) { (void)self; GNS_DELEGATE(shim_gns_allocate_message(cb)); return shim_net_allocate_message(cb); }
 
+static uint64_t SHIM_TC ping_up_to_date(void *self, float max_age) { (void)self; (void)max_age; return 1; }
 void register_networkingutils(void) {
+    shim_register_family("SteamNetworkingUtils", "CheckPingDataUpToDate", (void *)ping_up_to_date);
     const char *p = "SteamNetworkingUtils0";
     shim_register_family(p, "GetLocalTimestamp", (void *)local_timestamp);
     shim_register_family(p, "GetRelayNetworkStatus", (void *)relay_network_status);

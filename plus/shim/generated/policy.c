@@ -746,3 +746,9 @@ void register_policies(void) {
     shim_register_family("SteamUtils", "GetSteamHardwareDefaultConfig", (void *)p_zero);
     shim_register_family("SteamUtils", "IsRunningOnSteamHardware", (void *)p_zero);
 }
+
+int shim_is_policy_stub(const void *fn) {
+    const void *const all[] = {(const void *)p_empty, (const void *)p_hidden16, (const void *)p_hidden2, (const void *)p_hidden40, (const void *)p_ret_1, (const void *)p_ret_2, (const void *)p_ret_3, (const void *)p_ret_7, (const void *)p_ret_9, (const void *)p_ret_m1, (const void *)p_ret_m102, (const void *)p_struct8, (const void *)p_true, (const void *)p_void, (const void *)p_zero};
+    for (unsigned i = 0; i < sizeof all / sizeof *all; i++) if (all[i] == fn) return 1;
+    return 0;
+}

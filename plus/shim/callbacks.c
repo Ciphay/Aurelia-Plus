@@ -26,6 +26,23 @@ void shim_post_callback(int id, const void *data, int size) {
     ReleaseSRWLockExclusive(&g_lock);
 }
 
+#define MAX_AFTER 4
+static __thread struct { int id, size; uint8_t data[64]; } t_after[MAX_AFTER];
+static __thread int t_after_n;
+
+void shim_post_callback_after_result(int id, const void *data, int size) {
+    if (t_after_n >= MAX_AFTER || size < 0 || size > (int)sizeof t_after[0].data) return;
+    t_after[t_after_n].id = id;
+    t_after[t_after_n].size = size;
+    if (size) memcpy(t_after[t_after_n].data, data, (size_t)size);
+    t_after_n++;
+}
+
+void shim_flush_after_result(void) {
+    for (int i = 0; i < t_after_n; i++) shim_post_callback(t_after[i].id, t_after[i].data, t_after[i].size);
+    t_after_n = 0;
+}
+
 #define MAX_DEFERRED 8192
 typedef struct { ShimDeferred fn; void *a, *b; int c; } Deferred;
 static Deferred g_deferred[MAX_DEFERRED];

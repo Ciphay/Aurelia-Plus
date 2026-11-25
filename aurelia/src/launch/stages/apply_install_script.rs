@@ -17,6 +17,7 @@ use crate::launch::pipeline::{LaunchError, PipelineContext, PipelineStage};
 pub struct ApplyInstallScriptStage;
 
 const MARKER_PREFIX: &str = "aurelia-installscript-";
+const MARKER_VERSION: u32 = 2;
 const PROCESS_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(300);
 
 #[derive(Debug, PartialEq)]
@@ -174,27 +175,51 @@ pub(crate) fn variables(install_win: &str) -> Vec<(&'static str, String)> {
     ]
 }
 
-/// The `Registry` section: `string` and `dword` blocks per key; `(Default)` is the key's default value; a value that is a block of
-/// languages (`english`, `german`...) takes the English one (Steam reads the client's language and falls back to English).
-pub(crate) fn registry_values(script: &Node, vars: &[(&str, String)]) -> Vec<RegValue> {
+const LANGUAGES: &[&str] = &[
+    "english", "german", "french", "italian", "koreana", "spanish", "schinese", "tchinese", "russian", "thai", "japanese", "portuguese",
+    "polish", "danish", "dutch", "finnish", "norwegian", "swedish", "hungarian", "czech", "romanian", "turkish", "brazilian", "bulgarian",
+    "greek", "ukrainian", "latam", "vietnamese", "arabic",
+];
+
+fn is_language(name: &str) -> bool {
+    LANGUAGES.iter().any(|l| name.eq_ignore_ascii_case(l))
+}
+
+pub(crate) fn registry_values(script: &Node, vars: &[(&str, String)], language: &str) -> Vec<RegValue> {
     let mut out = Vec::new();
     let Some(root) = script.get("InstallScript").and_then(|s| s.get("Registry")) else {
         return out;
     };
     for (key, body) in root.items() {
         for (kind, reg_type) in [("string", "REG_SZ"), ("dword", "REG_DWORD")] {
-            for (name, value) in body.get(kind).map(Node::items).unwrap_or(&[]) {
-                let text = match value {
-                    Node::Str(s) => Some(s.as_str()),
-                    Node::Obj(_) => value.get("english").and_then(Node::text),
-                };
-                if let Some(data) = text {
-                    out.push(RegValue {
-                        key: expand(key, vars),
-                        name: (!name.eq_ignore_ascii_case("(Default)")).then(|| name.clone()),
-                        reg_type,
-                        data: expand(data, vars),
-                    });
+            let items = body.get(kind).map(Node::items).unwrap_or(&[]);
+            let has = |lang: &str| items.iter().any(|(n, v)| n.eq_ignore_ascii_case(lang) && matches!(v, Node::Obj(_)));
+            let chosen = if has(language) { language } else { "english" };
+            let mut push = |name: &str, data: &str| {
+                out.push(RegValue {
+                    key: expand(key, vars),
+                    name: (!name.eq_ignore_ascii_case("(Default)")).then(|| name.to_string()),
+                    reg_type,
+                    data: expand(data, vars),
+                });
+            };
+            for (name, value) in items {
+                match value {
+                    Node::Str(text) => push(name, text),
+                    Node::Obj(inner) if is_language(name) => {
+                        if name.eq_ignore_ascii_case(chosen) {
+                            for (n, v) in inner {
+                                if let Node::Str(text) = v {
+                                    push(n, text);
+                                }
+                            }
+                        }
+                    }
+                    Node::Obj(_) => {
+                        if let Some(text) = value.get(chosen).or_else(|| value.get("english")).and_then(Node::text) {
+                            push(name, text);
+                        }
+                    }
                 }
             }
         }
@@ -340,8 +365,18 @@ impl PipelineStage for ApplyInstallScriptStage {
 
     async fn execute(&self, ctx: &mut PipelineContext) -> std::result::Result<(), LaunchError> {
         let Some(install) = ctx.resolved_install_dir.clone() else { return Ok(()) };
-        let Some(prefix) = ctx.command_spec.as_ref().and_then(|s| s.env.get("WINEPREFIX")).cloned() else {
-            return Ok(());
+        let prefix = match ctx.command_spec.as_ref().and_then(|s| s.env.get("STEAM_COMPAT_DATA_PATH")) {
+            Some(data) => {
+                let pfx = PathBuf::from(data).join("pfx");
+                if !pfx.join("system.reg").is_file() {
+                    return Ok(());
+                }
+                pfx.to_string_lossy().into_owned()
+            }
+            None => match ctx.command_spec.as_ref().and_then(|s| s.env.get("WINEPREFIX")).cloned() {
+                Some(p) => p,
+                None => return Ok(()),
+            },
         };
         let files = script_files(ctx.app_id, &install);
         if files.is_empty() {
@@ -349,6 +384,13 @@ impl PipelineStage for ApplyInstallScriptStage {
         }
         let contents: Vec<Vec<u8>> = files.iter().filter_map(|p| std::fs::read(p).ok()).collect();
         let hash = script_hash(&contents);
+        let hash = format!("{hash}:{MARKER_VERSION}");
+        let language = ctx
+            .command_spec
+            .as_ref()
+            .and_then(|s| s.env.get("AURELIA_SHIM_LANGUAGE").cloned())
+            .or_else(|| std::env::var("AURELIA_SHIM_LANGUAGE").ok())
+            .unwrap_or_else(|| "english".to_string());
         let marker = PathBuf::from(&prefix).join(format!("{MARKER_PREFIX}{}", ctx.app_id));
         if std::fs::read_to_string(&marker).is_ok_and(|done| done.trim() == hash) {
             return Ok(());
@@ -360,7 +402,7 @@ impl PipelineStage for ApplyInstallScriptStage {
         let mut procs = Vec::new();
         for bytes in &contents {
             let script = parse_vdf(&String::from_utf8_lossy(bytes));
-            regs.extend(registry_values(&script, &vars));
+            regs.extend(registry_values(&script, &vars, &language));
             procs.extend(run_processes(&script, &vars, prefix_is_64bit));
         }
         if regs.is_empty() && procs.is_empty() {
@@ -549,8 +591,24 @@ mod tests {
     }
 
     #[test]
+    fn language_blocks_write_their_values_in_the_chosen_language() {
+        let script = parse_vdf(r#""InstallScript" { "Registry" { "HKEY_LOCAL_MACHINE\\Software\\X" { "string" {
+            "installdir" "%INSTALLDIR%"
+            "english" { "language" "English(US)" }
+            "brazilian" { "language" "Portuguese(Brazil)" }
+        } } } }"#);
+        let en = registry_values(&script, &vars(), "english");
+        assert_eq!(en.len(), 2);
+        assert_eq!((en[1].name.as_deref(), en[1].data.as_str()), (Some("language"), "English(US)"));
+        let br = registry_values(&script, &vars(), "brazilian");
+        assert_eq!(br[1].data, "Portuguese(Brazil)");
+        let fr = registry_values(&script, &vars(), "french");
+        assert_eq!(fr[1].data, "English(US)", "a language the game has no block for falls back to English");
+    }
+
+    #[test]
     fn registry_values_names_types_languages_and_variables() {
-        let regs = registry_values(&parse_vdf(GTA), &vars());
+        let regs = registry_values(&parse_vdf(GTA), &vars(), "english");
         assert_eq!(regs.len(), 4);
         assert_eq!(regs[0].name.as_deref(), Some("InstallFolderSteam"));
         assert_eq!(regs[0].data, "S:\\steamapps\\common\\G\\");
@@ -598,7 +656,7 @@ mod tests {
 
     #[test]
     fn broken_input_gives_nothing() {
-        assert!(registry_values(&parse_vdf("garbage {"), &vars()).is_empty());
+        assert!(registry_values(&parse_vdf("garbage {"), &vars(), "english").is_empty());
         assert!(run_processes(&parse_vdf(""), &vars(), true).is_empty());
     }
 }

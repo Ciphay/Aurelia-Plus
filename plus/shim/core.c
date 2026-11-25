@@ -290,7 +290,10 @@ void shim_init(void) {
     register_extras();
     register_community();
     register_otherstats();
+    register_images();
+    shim_prefetch_own_avatar();
     alias_unknown_versions();
+    shim_install_call_trace();
     if (dump) {
         for (int i = 0; i < g_n_ifaces; i++) {
             for (int k = 0; stub_copy[i] && k < g_ifaces[i].n_slots; k++)

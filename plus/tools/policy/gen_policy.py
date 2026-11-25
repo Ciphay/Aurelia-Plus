@@ -48,6 +48,9 @@ def generate(policy):
             for method in sorted(set(policy[prefix][kind])):
                 lines.append(f'    shim_register_family("{prefix}", "{method}", (void *){fn});\n')
     lines.append("}\n")
+    fns = sorted({_func(kind) for prefix in policy for kind in policy[prefix]} | {"p_hidden2", "p_hidden16", "p_hidden40"})
+    lines.append("\nint shim_is_policy_stub(const void *fn) {\n    const void *const all[] = {" + ", ".join(f"(const void *){f}" for f in fns) + "};\n")
+    lines.append("    for (unsigned i = 0; i < sizeof all / sizeof *all; i++) if (all[i] == fn) return 1;\n    return 0;\n}\n")
     return "".join(lines)
 
 def main(argv=None):

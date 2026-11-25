@@ -173,6 +173,10 @@ void serverlists_preload(void);
 size_t shim_win_path(const char *path, char *out, size_t cap);
 void shim_log(const char *fmt, ...);
 void shim_trace(const char *fmt, ...);
+void shim_install_call_trace(void);
+void register_images(void);
+void shim_prefetch_own_avatar(void);
+int shim_is_policy_stub(const void *fn);
 bool shim_load_snapshot_json(const char *json, size_t len);
 const Snapshot *shim_snapshot(void);
 uint32_t shim_process_appid(void);
@@ -185,6 +189,9 @@ void shim_register_family_ab(const char *prefix, const char *method, int argbyte
 typedef struct { int32_t user; int32_t id; uint8_t *param; int32_t size; } ShimCallbackMsg;
 #pragma pack(pop)
 void shim_post_callback(int id, const void *data, int size);
+uint64_t shim_current_lobby(void);
+void shim_post_callback_after_result(int id, const void *data, int size);
+void shim_flush_after_result(void);
 bool shim_next_callback(ShimCallbackMsg *out);
 void shim_free_last_callback(void);
 typedef void (*ShimDeferred)(void *a, void *b, int c);

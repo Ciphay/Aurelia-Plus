@@ -9,6 +9,7 @@ pub(crate) const WRAPPER_NAME: &str = "aurelia-plus-wrapper";
 const PASS_THROUGH: &[&str] = &[
     "AURELIA_SHIM_LOG",
     "AURELIA_SHIM_TRACE",
+    "AURELIA_SHIM_TRACE_CALLS",
     "AURELIA_SHIM_TICKET_FILE",
     "AURELIA_SHIM_OPEN_CHECKOUT",
     "AURELIA_SHIM_GNS",

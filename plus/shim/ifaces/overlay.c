@@ -404,6 +404,14 @@ static void SHIM_TC activate_overlay(void *self, const char *dialog) {
         kind[n] = 0;
     }
     Buf j = {0};
+    if (!strcmp(kind, "lobbyinvite")) {
+        uint64_t lobby = shim_current_lobby();
+        char tmp[48];
+        snprintf(tmp, sizeof tmp, "{\"lobby\":%llu}", (unsigned long long)lobby);
+        put_str(&j, lobby ? tmp : "{}");
+        enqueue("invite", &j);
+        return;
+    }
     put_str(&j, "{}");
     enqueue(kind, &j);
 }

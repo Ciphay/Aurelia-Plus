@@ -4,6 +4,7 @@ pub mod authlist;
 pub mod clanchat;
 pub mod cloudfile;
 pub mod gameserver;
+pub mod image;
 pub mod log;
 pub mod offline;
 pub mod otherstats;

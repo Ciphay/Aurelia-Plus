@@ -1,3 +1,4 @@
+
 use crate::cli::*;
 use crate::commands::common::*;
 
@@ -52,6 +53,43 @@ pub(crate) struct InstallRequest {
     pub(crate) auto_attempts: u32,
 }
 
+async fn existing_install_bytes(library_root: &str, app_id: u32) -> u64 {
+    let steamapps = std::path::Path::new(library_root).join("steamapps");
+    let Ok(raw) = tokio::fs::read_to_string(steamapps.join(format!("appmanifest_{app_id}.acf"))).await else {
+        return 0;
+    };
+    let Some(dir) = aurelia::core::acf::parse_app_manifest(&raw).install_dir else {
+        return 0;
+    };
+    let root = steamapps.join("common").join(dir);
+    tokio::task::spawn_blocking(move || allocated_bytes(&root)).await.unwrap_or(0)
+}
+
+fn allocated_bytes(root: &std::path::Path) -> u64 {
+    let mut total = 0u64;
+    let mut stack = vec![root.to_path_buf()];
+    while let Some(dir) = stack.pop() {
+        let Ok(read) = std::fs::read_dir(&dir) else { continue };
+        for entry in read.flatten() {
+            let Ok(meta) = entry.metadata() else { continue };
+            if meta.is_dir() {
+                stack.push(entry.path());
+            } else if meta.is_file() {
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::MetadataExt;
+                    total += meta.blocks() * 512;
+                }
+                #[cfg(not(unix))]
+                {
+                    total += meta.len();
+                }
+            }
+        }
+    }
+    total
+}
+
 pub(crate) async fn run_install(request: InstallRequest, json: bool) -> Result<()> {
     let InstallRequest {
         app_id,
@@ -90,7 +128,11 @@ pub(crate) async fn run_install(request: InstallRequest, json: bool) -> Result<(
             .await
             .with_context(|| format!("failed to estimate install size for app {app_id}"))?;
         if let Some(free) = available_space_for(std::path::Path::new(&library_root)) {
-            if est.disk_size.saturating_sub(on_disk) > free {
+            let mut have = on_disk;
+            if est.disk_size.saturating_sub(have) > free {
+                have = have.max(existing_install_bytes(&library_root, app_id).await);
+            }
+            if est.disk_size.saturating_sub(have) > free {
                 return Err(aurelia::core::error::TypedError::new(
                     aurelia::core::error::ErrorKind::DiskFull,
                     format!(

@@ -153,6 +153,18 @@ static void free_lobby(Lobby *l) {
     memset(l, 0, sizeof *l);
 }
 
+uint64_t shim_current_lobby(void) {
+    uint64_t any = 0, mine = 0;
+    AcquireSRWLockExclusive(&g_lock);
+    for (int i = 0; i < MAX_LOBBIES; i++) {
+        const Lobby *l = &g_lobbies[i];
+        if (!l->used || !l->joined) continue;
+        any = l->id;
+        if (l->owner == self_id()) mine = l->id;
+    }
+    ReleaseSRWLockExclusive(&g_lock);
+    return mine ? mine : any;
+}
 static Lobby *find_locked(uint64_t id) {
     for (int i = 0; i < MAX_LOBBIES; i++) if (g_lobbies[i].used && g_lobbies[i].id == id) return &g_lobbies[i];
     return NULL;
@@ -435,14 +447,6 @@ static void ensure_net(void) {
 
 typedef struct { uint64_t lobby; int type, limit; } EnterCtx;
 
-static void post_enter(uint64_t id, int response, bool locked) {
-    uint8_t cb[24] = {0};
-    memcpy(cb, &id, 8);
-    cb[12] = locked;
-    memcpy(cb + 16, &response, 4);
-    shim_post_callback(CB_ENTER, cb, sizeof cb);
-}
-
 static bool parse_created(const CmReply *r, void *ctx, void *out, int *size) {
     EnterCtx *c = ctx;
     PbR in;
@@ -463,8 +467,19 @@ static bool parse_created(const CmReply *r, void *ctx, void *out, int *size) {
             add_member(l, self_id(), self_name());
         }
         ReleaseSRWLockExclusive(&g_lock);
-        post_enter(id, 1, false);
+        {
+            uint8_t enter[24] = {0}, update[24] = {0};
+            int response = 1;
+            memcpy(enter, &id, 8);
+            memcpy(enter + 16, &response, 4);
+            memcpy(update, &id, 8);
+            memcpy(update + 8, &id, 8);
+            update[16] = 1;
+            shim_post_callback_after_result(CB_ENTER, enter, sizeof enter);
+            shim_post_callback_after_result(CB_UPDATE, update, sizeof update);
+        }
     }
+    shim_trace("CreateLobby response eresult=%d lobby=%llu", eresult, (unsigned long long)id);
     memset(out, 0, 16);
     memcpy(out, &eresult, 4);
     memcpy((uint8_t *)out + 8, &id, 8);
@@ -476,6 +491,7 @@ static uint64_t SHIM_TC create_lobby(void *self, int type, int max_members) {
     (void)self;
     ensure_net();
     uint64_t h = shim_callresult_reserve();
+    shim_trace("CreateLobby type=%d max=%d", type, max_members);
     EnterCtx *c = calloc(1, sizeof *c);
     if (!c) { shim_callresult_fail_handle(h); return h; }
     c->type = type;
@@ -540,6 +556,7 @@ static uint64_t SHIM_TC join_lobby(void *self, uint64_t id) {
 static void send_async(int32_t emsg, PbW *w) { shim_cm_post(emsg, w); }
 
 static void SHIM_TC leave_lobby(void *self, uint64_t id) {
+    shim_trace("LeaveLobby lobby=%llu", (unsigned long long)id);
     (void)self;
     AcquireSRWLockExclusive(&g_lock);
     Lobby *l = find_locked(id);
@@ -660,6 +677,7 @@ static uint64_t SHIM_TC request_lobby_list(void *self) {
 }
 
 static uint64_t *SHIM_TC lobby_by_index(void *self, uint64_t *ret, int i) {
+    { static LONG seen; if (!InterlockedExchange(&seen, 1)) shim_trace("GetLobbyByIndex (first call)"); }
     (void)self;
     AcquireSRWLockExclusive(&g_lock);
     *ret = i >= 0 && i < g_n_list ? g_list[i] : 0;
@@ -676,6 +694,7 @@ static const char *copy_out(const char *s) {
 }
 
 static int SHIM_TC num_members(void *self, uint64_t id) {
+    { static LONG seen; if (!InterlockedExchange(&seen, 1)) shim_trace("GetNumLobbyMembers (first call)"); }
     (void)self;
     AcquireSRWLockExclusive(&g_lock);
     Lobby *l = find_locked(id);
@@ -685,6 +704,7 @@ static int SHIM_TC num_members(void *self, uint64_t id) {
 }
 
 static uint64_t *SHIM_TC member_by_index(void *self, uint64_t *ret, uint64_t id, int i) {
+    { static LONG seen; if (!InterlockedExchange(&seen, 1)) shim_trace("GetLobbyMemberByIndex (first call)"); }
     (void)self;
     AcquireSRWLockExclusive(&g_lock);
     Lobby *l = find_locked(id);
@@ -694,6 +714,7 @@ static uint64_t *SHIM_TC member_by_index(void *self, uint64_t *ret, uint64_t id,
 }
 
 static uint64_t *SHIM_TC lobby_owner(void *self, uint64_t *ret, uint64_t id) {
+    { static LONG seen; if (!InterlockedExchange(&seen, 1)) shim_trace("GetLobbyOwner (first call)"); }
     (void)self;
     AcquireSRWLockExclusive(&g_lock);
     Lobby *l = find_locked(id);
@@ -703,6 +724,7 @@ static uint64_t *SHIM_TC lobby_owner(void *self, uint64_t *ret, uint64_t id) {
 }
 
 static const char *SHIM_TC get_lobby_data(void *self, uint64_t id, const char *key) {
+    { static LONG seen; if (!InterlockedExchange(&seen, 1)) shim_trace("GetLobbyData (first call)"); }
     (void)self;
     AcquireSRWLockExclusive(&g_lock);
     Lobby *l = find_locked(id);
@@ -713,6 +735,7 @@ static const char *SHIM_TC get_lobby_data(void *self, uint64_t id, const char *k
 }
 
 static int SHIM_TC lobby_data_count(void *self, uint64_t id) {
+    { static LONG seen; if (!InterlockedExchange(&seen, 1)) shim_trace("GetLobbyDataCount (first call)"); }
     (void)self;
     AcquireSRWLockExclusive(&g_lock);
     Lobby *l = find_locked(id);
@@ -722,6 +745,7 @@ static int SHIM_TC lobby_data_count(void *self, uint64_t id) {
 }
 
 static uint64_t SHIM_TC lobby_data_by_index(void *self, uint64_t id, int i, char *key, int cb_key, char *val, int cb_val) {
+    { static LONG seen; if (!InterlockedExchange(&seen, 1)) shim_trace("GetLobbyDataByIndex (first call)"); }
     (void)self;
     bool ok = false;
     AcquireSRWLockExclusive(&g_lock);
@@ -736,6 +760,7 @@ static uint64_t SHIM_TC lobby_data_by_index(void *self, uint64_t id, int i, char
 }
 
 static const char *SHIM_TC get_member_data(void *self, uint64_t id, uint64_t member, const char *key) {
+    { static LONG seen; if (!InterlockedExchange(&seen, 1)) shim_trace("GetLobbyMemberData (first call)"); }
     (void)self;
     AcquireSRWLockExclusive(&g_lock);
     Lobby *l = find_locked(id);
@@ -752,6 +777,7 @@ static const char *SHIM_TC get_member_data_v001(void *self, uint64_t id, uint64_
 }
 
 static int SHIM_TC get_chat_entry(void *self, uint64_t id, int index, uint64_t *user, void *data, int cap, int *type) {
+    { static LONG seen; if (!InterlockedExchange(&seen, 1)) shim_trace("GetLobbyChatEntry (first call)"); }
     (void)self;
     int n = 0;
     AcquireSRWLockExclusive(&g_lock);
@@ -768,6 +794,7 @@ static int SHIM_TC get_chat_entry(void *self, uint64_t id, int index, uint64_t *
 }
 
 static uint64_t SHIM_TC get_game_server(void *self, uint64_t id, uint32_t *ip, uint16_t *port, uint64_t *server) {
+    { static LONG seen; if (!InterlockedExchange(&seen, 1)) shim_trace("GetLobbyGameServer (first call)"); }
     (void)self;
     bool ok = false;
     AcquireSRWLockExclusive(&g_lock);
@@ -783,6 +810,7 @@ static uint64_t SHIM_TC get_game_server(void *self, uint64_t id, uint32_t *ip, u
 }
 
 static int SHIM_TC get_member_limit(void *self, uint64_t id) {
+    { static LONG seen; if (!InterlockedExchange(&seen, 1)) shim_trace("GetLobbyMemberLimit (first call)"); }
     (void)self;
     AcquireSRWLockExclusive(&g_lock);
     Lobby *l = find_locked(id);
@@ -808,6 +836,7 @@ static void push_lobby_state(uint64_t id) {
 }
 
 static uint64_t SHIM_TC set_lobby_data(void *self, uint64_t id, const char *key, const char *val) {
+    shim_trace("SetLobbyData lobby=%llu %s=%s", (unsigned long long)id, key ? key : "", val ? val : "");
     (void)self;
     bool ok;
     AcquireSRWLockExclusive(&g_lock);
@@ -819,6 +848,7 @@ static uint64_t SHIM_TC set_lobby_data(void *self, uint64_t id, const char *key,
 }
 
 static uint64_t SHIM_TC delete_lobby_data(void *self, uint64_t id, const char *key) {
+    shim_trace("DeleteLobbyData lobby=%llu %s", (unsigned long long)id, key ? key : "");
     (void)self;
     bool ok = false;
     AcquireSRWLockExclusive(&g_lock);
@@ -830,6 +860,7 @@ static uint64_t SHIM_TC delete_lobby_data(void *self, uint64_t id, const char *k
 }
 
 static void SHIM_TC set_member_data(void *self, uint64_t id, const char *key, const char *val) {
+    shim_trace("SetLobbyMemberData lobby=%llu %s=%s", (unsigned long long)id, key ? key : "", val ? val : "");
     (void)self;
     PbW w = {0};
     bool ok = false;
@@ -878,6 +909,7 @@ static DWORD WINAPI friends_lobbies_thread(LPVOID unused) {
 }
 
 static uint64_t SHIM_TC request_friends_lobbies(void *self) {
+    { static LONG seen; if (!InterlockedExchange(&seen, 1)) shim_trace("RequestFriendsLobbies (first call)"); }
     (void)self;
     HANDLE t = CreateThread(NULL, 0, friends_lobbies_thread, NULL, 0, NULL);
     if (t) CloseHandle(t);
@@ -903,6 +935,7 @@ static uint64_t SHIM_TC send_chat(void *self, uint64_t id, const void *data, int
 }
 
 static uint64_t SHIM_TC set_lobby_owner(void *self, uint64_t id, uint64_t owner) {
+    shim_trace("SetLobbyOwner lobby=%llu", (unsigned long long)id);
     (void)self;
     bool ok;
     AcquireSRWLockExclusive(&g_lock);
@@ -919,6 +952,7 @@ static uint64_t SHIM_TC set_lobby_owner(void *self, uint64_t id, uint64_t owner)
 }
 
 static uint64_t SHIM_TC invite_user(void *self, uint64_t id, uint64_t user) {
+    shim_trace("InviteUserToLobby lobby=%llu", (unsigned long long)id);
     (void)self;
     bool known;
     AcquireSRWLockExclusive(&g_lock);
@@ -935,6 +969,7 @@ static uint64_t SHIM_TC invite_user(void *self, uint64_t id, uint64_t user) {
 }
 
 static void SHIM_TC set_game_server(void *self, uint64_t id, uint32_t ip, uint32_t port, uint64_t server) {
+    shim_trace("SetLobbyGameServer lobby=%llu", (unsigned long long)id);
     (void)self;
     bool known;
     AcquireSRWLockExclusive(&g_lock);
@@ -954,6 +989,7 @@ static void SHIM_TC set_game_server(void *self, uint64_t id, uint32_t ip, uint32
 
 static uint64_t change_setting(uint64_t id, int which, int value) {
     bool ok;
+    shim_trace("LobbySetting %s lobby=%llu value=%d", which == 0 ? "limit" : which == 1 ? "type" : "joinable", (unsigned long long)id, value);
     AcquireSRWLockExclusive(&g_lock);
     Lobby *l = find_locked(id);
     ok = l && l->joined && l->owner == self_id();
@@ -971,6 +1007,7 @@ static uint64_t SHIM_TC set_lobby_type(void *self, uint64_t id, int type) { (voi
 static uint64_t SHIM_TC set_joinable(void *self, uint64_t id, uint8_t joinable) { (void)self; return change_setting(id, 2, joinable); }
 
 static uint64_t SHIM_TC set_linked_lobby(void *self, uint64_t id, uint64_t other) {
+    shim_trace("SetLinkedLobby lobby=%llu", (unsigned long long)id);
     (void)self;
     if (!id) return 0;
     PbW w = {0};

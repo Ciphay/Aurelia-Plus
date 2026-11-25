@@ -109,12 +109,32 @@ static const char *SHIM_TC clan_name(void *self, uint64_t id) { (void)self; (voi
 
 static float SHIM_TC music_volume(void *self) { (void)self; return 1.0f; }
 
+static void SHIM_TC request_friend_rich_presence(void *self, uint64_t steamid) {
+    (void)self;
+    uint8_t resp[12];
+    uint32_t appid = shim_process_appid();
+    memcpy(resp, &steamid, 8);
+    memcpy(resp + 8, &appid, 4);
+    shim_post_callback(336, resp, sizeof resp);
+}
+
+static uint64_t SHIM_TC set_persona_name(void *self, const char *name) {
+    (void)self; (void)name;
+    uint8_t resp[8] = {0};
+    int32_t denied = 15;
+    memcpy(resp + 4, &denied, 4);
+    uint64_t call = shim_callresult_reserve();
+    shim_callresult_complete(call, 347, resp, sizeof resp);
+    return call;
+}
 void register_misc(void) {
+    shim_register_family("SteamFriends", "SetPersonaName", (void *)set_persona_name);
     shim_register_family("STEAMMUSIC_INTERFACE", "GetVolume", (void *)music_volume);
     shim_register_family("SteamFriends", "GetClanCount", (void *)clan_count);
     shim_register_family("SteamFriends", "GetClanByIndex", (void *)clan_by_index);
     shim_register_family("SteamFriends", "GetClanName", (void *)clan_name);
     shim_register_family("SteamFriends", "SetRichPresence", (void *)set_rich_presence);
+    shim_register_family("SteamFriends", "RequestFriendRichPresence", (void *)request_friend_rich_presence);
     shim_register_family("SteamFriends", "ClearRichPresence", (void *)clear_rich_presence);
     shim_register_family("SteamFriends", "GetFriendRichPresence", (void *)friend_rich_presence);
     shim_register_family("SteamFriends", "GetFriendRichPresenceKeyCount", (void *)friend_rich_presence_key_count);

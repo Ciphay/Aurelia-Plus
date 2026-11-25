@@ -200,6 +200,7 @@ static DWORD WINAPI async_thread(LPVOID arg) {
     uint8_t *out = calloc(1, (size_t)size);
     if (out && ok && j->parse && j->parse(&r, j->ctx, out, &size)) shim_callresult_complete(j->handle, j->callback_id, out, size);
     else shim_callresult_fail_handle(j->handle);
+    shim_flush_after_result();
     free(out);
     shim_cm_reply_free(&r);
     pbw_free(&j->body);

@@ -177,6 +177,7 @@ fn call_handler(client: Arc<SteamClient>, state: Arc<Mutex<AuthState>>, pool: Po
                 }
                 aurelia::bridge::accountinfo::SLOT_ACCOUNT_INFO => return (0, aurelia::bridge::accountinfo::encode(steam_vent::last_account_info().as_ref())),
                 aurelia::bridge::webops::SLOT_WEB => return web_call(&client, &payload).await,
+                aurelia::bridge::image::SLOT_IMAGE => return image_call(&client, &payload).await,
                 aurelia::bridge::otherstats::SLOT_OTHER_STATS => return other_stats_call(&client, &gs, &payload, app_id).await,
                 aurelia::bridge::clanchat::SLOT_CLAN => return clan_call(&client, &clan_chat, &clan_hooked, &payload).await,
                 aurelia::bridge::appsquery::SLOT_APPS => {
@@ -528,6 +529,76 @@ async fn gameserver_call(client: &SteamClient, gs: &Mutex<Option<steam_vent::Con
     }
 }
 
+async fn image_call(client: &SteamClient, payload: &[u8]) -> (i32, Vec<u8>) {
+    use aurelia::bridge::image::{self, ImageRequest};
+    use std::collections::HashMap;
+    use std::sync::{Mutex, OnceLock};
+    static PIXELS: OnceLock<Mutex<HashMap<String, Vec<u8>>>> = OnceLock::new();
+    static ACHIEVEMENTS: OnceLock<Mutex<HashMap<u32, Vec<aurelia::steam_client::GameAchievement>>>> = OnceLock::new();
+    let Some(req) = image::parse_request(payload) else { return (-2, Vec::new()) };
+    let url = match req {
+        ImageRequest::Avatar { steam_id, size } => match client.user_profile(steam_id).await {
+            Ok(profile) => match profile.avatar_url {
+                Some(full) => image::avatar_variant(&full, size),
+                None => return (-4, Vec::new()),
+            },
+            Err(e) => {
+                blog!("bridge: avatar of {steam_id} unavailable: {e:#}");
+                return (-5, Vec::new());
+            }
+        },
+        ImageRequest::AchievementIcon { app_id, achieved, name } => {
+            let known = ACHIEVEMENTS.get_or_init(Default::default).lock().ok().and_then(|m| m.get(&app_id).cloned());
+            let list = match known {
+                Some(list) => list,
+                None => match client.fetch_achievements(app_id, "english").await {
+                    Ok(list) => {
+                        if let Ok(mut m) = ACHIEVEMENTS.get_or_init(Default::default).lock() {
+                            m.insert(app_id, list.clone());
+                        }
+                        list
+                    }
+                    Err(e) => {
+                        blog!("bridge: achievements of {app_id} unavailable for icons: {e:#}");
+                        return (-5, Vec::new());
+                    }
+                },
+            };
+            match list.iter().find(|a| a.api_name.eq_ignore_ascii_case(&name)) {
+                Some(a) => if achieved { a.icon_unlocked.clone() } else { a.icon_locked.clone() },
+                None => return (-4, Vec::new()),
+            }
+        }
+    };
+    if url.is_empty() {
+        return (-4, Vec::new());
+    }
+    if let Some(hit) = PIXELS.get_or_init(Default::default).lock().ok().and_then(|m| m.get(&url).cloned()) {
+        return (0, hit);
+    }
+    let bytes = match reqwest::Client::new().get(&url).timeout(std::time::Duration::from_secs(15)).send().await.and_then(|r| r.error_for_status()) {
+        Ok(r) => match r.bytes().await {
+            Ok(b) => b,
+            Err(e) => {
+                blog!("bridge: image {url} failed: {e}");
+                return (-5, Vec::new());
+            }
+        },
+        Err(e) => {
+            blog!("bridge: image {url} failed: {e}");
+            return (-5, Vec::new());
+        }
+    };
+    let Some((w, h, rgba)) = image::decode_rgba(&bytes) else {
+        blog!("bridge: image {url} could not be decoded");
+        return (-5, Vec::new());
+    };
+    let reply = image::encode_reply(w, h, &rgba);
+    if let Ok(mut m) = PIXELS.get_or_init(Default::default).lock() {
+        m.insert(url, reply.clone());
+    }
+    (0, reply)
+}
 async fn cloudfile_call(client: &SteamClient, payload: &[u8]) -> (i32, Vec<u8>) {
     let Some((op, app, name, data)) = aurelia::bridge::cloudfile::parse_request(payload) else { return (-2, Vec::new()) };
     let cloud = match client.cloud_client() {

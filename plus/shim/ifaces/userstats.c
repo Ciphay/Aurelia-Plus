@@ -237,6 +237,10 @@ __asm__(".text\n.globl set_stat_any\nset_stat_any:\n\tmovd %xmm2, %r9d\n\tjmp se
 #else
 static uint64_t SHIM_TC set_stat_any(void *self, const char *name, uint32_t bits) { return set_stat_impl(self, name, (int32_t)bits, bits); }
 #endif
+int shim_achievement_achieved(const char *name) {
+    Ach *a = find_ach(name);
+    return a ? a->time != 0 : -1;
+}
 
 static uint64_t SHIM_TC get_achievement(void *self, const char *name, uint8_t *achieved) {
     (void)self;

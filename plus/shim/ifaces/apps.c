@@ -6,6 +6,23 @@
 #include "../shim.h"
 
 static uint64_t SHIM_TC ret0(void *self) { (void)self; return 0; }
+static void post_no_proof_key(uint32_t appid) {
+    uint8_t resp[12 + 240];
+    memset(resp, 0, sizeof resp);
+    int32_t fail = 2;
+    memcpy(resp, &fail, 4);
+    memcpy(resp + 4, &appid, 4);
+    shim_post_callback(1021, resp, sizeof resp);
+}
+static const ShimDlc *find_dlc(uint32_t appid);
+
+static void SHIM_TC install_dlc(void *self, uint32_t appid) {
+    (void)self;
+    const ShimDlc *d = find_dlc(appid);
+    if (d && d->owned && d->installed) shim_post_callback(1005, &appid, sizeof appid);
+}
+static void SHIM_TC request_all_proof_keys(void *self) { (void)self; post_no_proof_key(shim_process_appid()); }
+static void SHIM_TC request_proof_key(void *self, uint32_t appid) { (void)self; post_no_proof_key(appid); }
 
 static const ShimApp *find_app(uint32_t appid) {
     const Snapshot *s = shim_snapshot();
@@ -264,7 +281,9 @@ static uint64_t SHIM_TC set_active_beta(void *self, const char *name) {
 
 static uint64_t SHIM_TC timed_trial(void *self, uint32_t *allowed, uint32_t *played) { (void)self; if (allowed) *allowed = 0; if (played) *played = 0; return 0; }
 
+static uint64_t SHIM_TC set_dlc_context(void *self, uint32_t appid) { (void)self; (void)appid; return 1; }
 void register_apps(void) {
+    shim_register_family("STEAMAPPS_INTERFACE_VERSION", "SetDlcContext", (void *)set_dlc_context);
     reg("GetEarliestPurchaseUnixTime", (void *)earliest_purchase);
     reg("GetAppData", (void *)get_app_data);
     shim_register_family_ab("STEAMAPPS_INTERFACE_VERSION", "BIsTimedTrial", 8, (void *)timed_trial);
@@ -286,6 +305,9 @@ void register_apps(void) {
     reg("BGetDLCDataByIndex", (void *)dlc_by_index);
     reg("BIsDlcInstalled", (void *)is_dlc_installed);
     reg("GetAppInstallDir", (void *)app_install_dir);
+    reg("RequestAllProofOfPurchaseKeys", (void *)request_all_proof_keys);
+    reg("InstallDLC", (void *)install_dlc);
+    reg("RequestAppProofOfPurchaseKey", (void *)request_proof_key);
     shim_register_family("STEAMAPPLIST_INTERFACE_VERSION", "GetAppInstallDir", (void *)app_install_dir);
     reg("GetCurrentBetaName", (void *)current_beta_name);
     reg("GetAppBuildId", (void *)app_build_id);
